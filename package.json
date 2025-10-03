@@ -16,6 +16,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "tournament-organizer": "^3.9.1",
     "vue": "^3.5.22"
   },
   "devDependencies": {
