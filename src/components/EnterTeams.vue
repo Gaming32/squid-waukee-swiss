@@ -35,30 +35,38 @@ function shiftTeam(index: number, direction: number) {
       <input v-model="newTeamName" placeholder="Team name" @keyup.enter="addNewTeam" />
       <button :disabled="!newTeamName.length" @click="addNewTeam">Add team</button>
     </p>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Team</th>
+          <th>Controls</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(team, teamNumber) in teams" :key="team">
+          <td>{{ teamNumber + 1 }}</td>
+          <td>{{ team }}</td>
+          <td>
+            <button class="icon-button" @click="() => deleteTeam(teamNumber)">❌</button>
+            <button class="icon-button" @click="() => shiftTeam(teamNumber, -1)">🢁</button>
+            <button class="icon-button" @click="() => shiftTeam(teamNumber, 1)">🢃</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
     <p>
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Team</th>
-            <th>Controls</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(team, teamNumber) in teams" :key="team">
-            <td>{{ teamNumber + 1 }}</td>
-            <td>{{ team }}</td>
-            <td>
-              <button class="icon-button" @click="() => deleteTeam(teamNumber)">❌</button>
-              <button class="icon-button" @click="() => shiftTeam(teamNumber, -1)">🢁</button>
-              <button class="icon-button" @click="() => shiftTeam(teamNumber, 1)">🢃</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </p>
-    <p>
-      <button :disabled="!teams.length" @click="() => emit('finish', teams)">Teams all set!</button>
+      <button :disabled="teams.length < 2" @click="() => emit('finish', teams)">
+        Teams all set!
+      </button>
     </p>
   </div>
 </template>
+
+<style>
+.icon-button {
+  background-color: transparent;
+  border: none;
+  outline: none;
+}
+</style>
