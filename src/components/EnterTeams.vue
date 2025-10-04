@@ -49,8 +49,8 @@ function shiftTeam(index: number, direction: number) {
           <td>{{ team }}</td>
           <td>
             <button class="icon-button" @click="() => deleteTeam(teamNumber)">❌</button>
-            <button class="icon-button" @click="() => shiftTeam(teamNumber, -1)">🢁</button>
-            <button class="icon-button" @click="() => shiftTeam(teamNumber, 1)">🢃</button>
+            <button class="icon-button unicode-arrow" @click="() => shiftTeam(teamNumber, -1)">⬆</button>
+            <button class="icon-button unicode-arrow" @click="() => shiftTeam(teamNumber, 1)">⬇</button>
           </td>
         </tr>
       </tbody>
@@ -63,4 +63,12 @@ function shiftTeam(index: number, direction: number) {
   </div>
 </template>
 
-<style></style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&display=swap');
+
+.unicode-arrow {
+  font-family: 'Noto Sans Symbols 2';
+  font-size: 110%;
+  height: 1em;
+}
+</style>
