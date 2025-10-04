@@ -32,7 +32,7 @@ function shiftTeam(index: number, direction: number) {
     <h2>Enter teams:</h2>
     <p>
       Enter team name:
-      <input v-model="newTeamName" placeholder="Team name" @keyup.enter="addNewTeam" />
+      <input v-model="newTeamName" placeholder="Team name" @keyup.enter="addNewTeam" />&MediumSpace;
       <button :disabled="!newTeamName.length" @click="addNewTeam">Add team</button>
     </p>
     <table>
@@ -63,10 +63,4 @@ function shiftTeam(index: number, direction: number) {
   </div>
 </template>
 
-<style>
-.icon-button {
-  background-color: transparent;
-  border: none;
-  outline: none;
-}
-</style>
+<style></style>
