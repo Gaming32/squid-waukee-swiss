@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, reactive, shallowRef, useTemplateRef } from 'vue'
+import { computed, reactive, ref, shallowRef, useTemplateRef } from 'vue'
 import EnterTeams from './components/EnterTeams.vue'
-import { Player } from 'tournament-organizer/components'
+import { Match, Player } from 'tournament-organizer/components'
 import {
   CustomStandingsTournament,
   PLAYOFFS_BEST_OF,
   SWISS_BEST_OF,
   SWISS_TO_WIN,
+  type AdditionalStandingsValues,
 } from './tournament'
 import ReportScoreModal from './components/ReportScoreModal.vue'
 import TournamentStage from './components/TournamentStage.vue'
@@ -14,16 +15,23 @@ import TournamentStage from './components/TournamentStage.vue'
 const reportScoreModal = useTemplateRef('reportScoreModal')
 
 const tournament = shallowRef<CustomStandingsTournament | null>(null)
-const teamNames = computed(() =>
-  Object.fromEntries(tournament.value?.players.map((p) => [p.id, p.name]) ?? []),
-)
+const tournamentMatches = ref<Match[]>([])
+const teamNames = ref<{ [id: string]: string }>({})
 const swissRoundCount = computed(() => tournament.value?.stageOne.rounds ?? 0)
-const swissStandings = computed(() => tournament.value?.standings(false) ?? [])
+
+const lockedSwissStandings = ref<AdditionalStandingsValues[] | null>(null)
+const swissStandings = computed(
+  () => lockedSwissStandings.value ?? tournament.value?.standings(false) ?? [],
+)
 
 function createTournament(teams: string[]) {
   const newTournament = new CustomStandingsTournament('squid-waukee', 'Squid Waukee')
   newTournament.settings = {
-    players: teams.map((team, index) => new Player(index.toString(), team)),
+    players: teams.map((team, index) => {
+      const player = new Player(index.toString(), team)
+      player.meta.dropped = false
+      return player
+    }),
     scoring: {
       bestOf: SWISS_BEST_OF,
     },
@@ -40,9 +48,16 @@ function createTournament(teams: string[]) {
   }
   newTournament.start()
 
-  newTournament.matches = reactive(newTournament.matches)
-  newTournament.players = reactive(newTournament.players)
+  tournamentMatches.value = newTournament.matches = reactive(newTournament.matches)
+  teamNames.value = Object.fromEntries(newTournament.players.map((p) => [p.id, p.name]))
   tournament.value = newTournament
+}
+
+function dropTeam(teamId: string) {
+  const team = tournament.value?.players.find((p) => p.id == teamId)
+  if (!team) return
+  team.meta.dropped = true
+  tournament.value?.removePlayer(teamId)
 }
 
 function reportScore(matchId: string) {
@@ -72,8 +87,11 @@ function reportScore(matchId: string) {
 }
 
 function nextRound() {
-  tournament.value?.next()
+  const oldStandings = swissStandings.value
+  tournament.value!.next()
+  tournamentMatches.value = tournament.value!.matches = reactive(tournament.value!.matches)
   if (tournament.value?.status == 'stage-two') {
+    lockedSwissStandings.value = oldStandings
     tournament.value.scoring.bestOf = PLAYOFFS_BEST_OF
   }
 }
@@ -90,10 +108,16 @@ function nextRound() {
       v-if="tournament !== null"
       title="Swiss"
       :best-of="SWISS_BEST_OF"
-      :stageInfo="{ type: 'swiss', roundCount: swissRoundCount, standings: swissStandings }"
+      :stage-active="tournament.status === 'stage-one'"
+      :stageInfo="{
+        type: 'swiss',
+        roundCount: swissRoundCount,
+        standings: swissStandings,
+      }"
       :team-names="teamNames"
-      :matches="tournament.matches.filter((m) => m.round <= swissRoundCount)"
+      :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
       @match-clicked="reportScore"
+      @drop-team="dropTeam"
       @next-round="nextRound"
     />
 
@@ -101,9 +125,10 @@ function nextRound() {
       v-if="tournament !== null"
       title="Playoffs"
       :best-of="PLAYOFFS_BEST_OF"
+      :stage-active="tournament.status === 'stage-two'"
       :stageInfo="{ type: 'playoffs' }"
       :team-names="teamNames"
-      :matches="tournament.matches.filter((m) => m.round > swissRoundCount)"
+      :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
       @match-clicked="reportScore"
     />
   </div>

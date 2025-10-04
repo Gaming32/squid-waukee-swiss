@@ -39,8 +39,8 @@ export class CustomStandingsTournament extends Tournament {
     }
 
     standings.sort((a, b) => {
-      if (a.player.active !== b.player.active) {
-        return +b.player.active - +a.player.active
+      if (a.player.meta.dropped !== b.player.meta.dropped) {
+        return a.player.meta.dropped - b.player.meta.dropped
       }
 
       if (a.matchPoints !== b.matchPoints) {

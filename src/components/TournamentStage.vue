@@ -19,6 +19,7 @@ export type StageInfo =
 const props = defineProps<{
   title: string
   bestOf: number
+  stageActive: boolean
   stageInfo: StageInfo
 
   teamNames: { [id: string]: string }
@@ -27,6 +28,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'matchClicked', matchId: string): void
+  (e: 'dropTeam', teamId: string): void
   (e: 'nextRound'): void
 }>()
 
@@ -89,7 +91,7 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
     <template v-if="stageInfo.type === 'swiss'">
       <p>
         <button
-          v-if="Math.max(...matches.map((m) => m.round)) < stageInfo.roundCount"
+          v-if="stageActive && Math.max(...matches.map((m) => m.round)) < stageInfo.roundCount"
           :disabled="matches.some((m) => m.active)"
           @click="() => emit('nextRound')"
         >
@@ -107,6 +109,7 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
             <th>OW%</th>
             <th>W/L (M)</th>
             <th>OW% (M)</th>
+            <th>Drop</th>
           </tr>
         </thead>
         <tbody>
@@ -118,13 +121,20 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
             <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
             <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
             <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
+            <td v-if="team.player.meta.dropped">Dropped</td>
+            <td v-else-if="stageActive">
+              <button class="icon-button" @click="() => emit('dropTeam', team.player.id)">
+                ❌
+              </button>
+            </td>
+            <td v-else></td>
           </tr>
         </tbody>
       </table>
 
       <p>
         <button
-          v-if="Math.max(...matches.map((m) => m.round)) === stageInfo.roundCount"
+          v-if="stageActive && Math.max(...matches.map((m) => m.round)) === stageInfo.roundCount"
           :disabled="matches.some((m) => m.active)"
           @click="() => emit('nextRound')"
         >
