@@ -16,7 +16,6 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "brackets-viewer": "^1.8.0",
     "tournament-organizer": "^3.9.1",
     "vue": "^3.5.22"
   },
@@ -27,6 +26,7 @@
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/tsconfig": "^0.8.1",
+    "brackets-viewer": "^1.8.0",
     "eslint": "^9.33.0",
     "eslint-plugin-vue": "~10.4.0",
     "jiti": "^2.5.1",

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { type AdditionalStandingsValues } from '@/tournament'
+import type { AdditionalStandingsValues } from '@/tournament'
 import type { Match } from 'tournament-organizer/components'
 import { Status } from 'brackets-model'
 import BracketRenderer from './BracketRenderer.vue'
 import { computed } from 'vue'
-import { type ViewerData } from 'brackets-viewer'
+import type { ViewerData } from 'brackets-viewer'
 
 export type StageInfo =
   | {
