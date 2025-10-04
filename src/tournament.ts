@@ -1,6 +1,9 @@
 import { Tournament } from 'tournament-organizer/components'
 import type { StandingsValues } from 'tournament-organizer/interfaces'
 
+export const SWISS_BEST_OF = 3
+export const SWISS_TO_WIN = (SWISS_BEST_OF + 1) / 2
+
 export interface AdditionalStandingsValues extends StandingsValues {
   lossesAgainstTiedScore: number
 }
