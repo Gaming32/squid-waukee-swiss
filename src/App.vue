@@ -6,7 +6,6 @@ import {
   CustomStandingsTournament,
   PLAYOFFS_BEST_OF,
   SWISS_BEST_OF,
-  SWISS_TO_WIN,
   type AdditionalStandingsValues,
 } from './tournament'
 import ReportScoreModal from './components/ReportScoreModal.vue'
@@ -32,6 +31,7 @@ function createTournament(teams: string[]) {
       player.meta.dropped = false
       return player
     }),
+    sorting: 'none',
     scoring: {
       bestOf: SWISS_BEST_OF,
     },
@@ -60,7 +60,7 @@ function dropTeam(teamId: string) {
   tournament.value?.removePlayer(teamId)
 }
 
-function reportScore(matchId: string) {
+function reportScore(matchId: string, bestOf: number) {
   const match = tournament.value?.matches.find((m) => m.id == matchId)
   if (!match || !match.player1.id || !match.player2.id || !match.active) {
     return
@@ -76,12 +76,10 @@ function reportScore(matchId: string) {
       team2: team2.name,
       score2: match.player2.win,
     },
-    tournament.value!.scoring.bestOf,
+    bestOf,
     (scores) => {
       if (!scores) return
-      if (scores.score1 >= SWISS_TO_WIN || scores.score2 >= SWISS_TO_WIN) {
-        tournament.value!.enterResult(matchId, scores.score1, scores.score2)
-      }
+      tournament.value!.enterResult(matchId, scores.score1, scores.score2)
     },
   )
 }
@@ -102,35 +100,37 @@ function nextRound() {
     <ReportScoreModal ref="reportScoreModal" />
 
     <h1>Squid-Waukee</h1>
+
     <EnterTeams v-if="tournament === null" @finish="createTournament" />
+    <template v-else>
+      <TournamentStage
+        v-if="tournament !== null"
+        title="Swiss"
+        :best-of="SWISS_BEST_OF"
+        :stage-active="tournament.status === 'stage-one'"
+        :stageInfo="{
+          type: 'swiss',
+          roundCount: swissRoundCount,
+          standings: swissStandings,
+        }"
+        :team-names="teamNames"
+        :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
+        @match-clicked="reportScore"
+        @drop-team="dropTeam"
+        @next-round="nextRound"
+      />
 
-    <TournamentStage
-      v-if="tournament !== null"
-      title="Swiss"
-      :best-of="SWISS_BEST_OF"
-      :stage-active="tournament.status === 'stage-one'"
-      :stageInfo="{
-        type: 'swiss',
-        roundCount: swissRoundCount,
-        standings: swissStandings,
-      }"
-      :team-names="teamNames"
-      :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
-      @match-clicked="reportScore"
-      @drop-team="dropTeam"
-      @next-round="nextRound"
-    />
-
-    <TournamentStage
-      v-if="tournament !== null"
-      title="Playoffs"
-      :best-of="PLAYOFFS_BEST_OF"
-      :stage-active="tournament.status === 'stage-two'"
-      :stageInfo="{ type: 'playoffs' }"
-      :team-names="teamNames"
-      :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
-      @match-clicked="reportScore"
-    />
+      <TournamentStage
+        v-if="tournament !== null"
+        title="Playoffs"
+        :best-of="PLAYOFFS_BEST_OF"
+        :stage-active="tournament.status === 'stage-two'"
+        :stageInfo="{ type: 'playoffs' }"
+        :team-names="teamNames"
+        :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
+        @match-clicked="reportScore"
+      />
+    </template>
   </div>
 </template>
 

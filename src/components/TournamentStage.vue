@@ -27,7 +27,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'matchClicked', matchId: string): void
+  (e: 'matchClicked', matchId: string, bestOf: number): void
   (e: 'dropTeam', teamId: string): void
   (e: 'nextRound'): void
 }>()
@@ -76,6 +76,11 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
     participants: bracketRendererParticipants.value,
   }
 })
+const hasDrops = computed(
+  () =>
+    props.stageInfo.type === 'swiss' &&
+    props.stageInfo.standings.some((team) => team.player.meta.dropped),
+)
 </script>
 
 <template>
@@ -85,7 +90,7 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
     <BracketRenderer
       v-if="bracketRendererMatches.length"
       :brackets="bracketRendererBrackets"
-      @match-clicked="(matchId) => emit('matchClicked', matchId.toString())"
+      @match-clicked="(matchId) => emit('matchClicked', matchId.toString(), props.bestOf)"
     />
 
     <template v-if="stageInfo.type === 'swiss'">
@@ -109,7 +114,7 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
             <th>OW%</th>
             <th>W/L (M)</th>
             <th>OW% (M)</th>
-            <th>Drop</th>
+            <th v-if="stageActive || hasDrops">Drop</th>
           </tr>
         </thead>
         <tbody>
@@ -127,7 +132,7 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
                 ❌
               </button>
             </td>
-            <td v-else></td>
+            <td v-else-if="hasDrops"></td>
           </tr>
         </tbody>
       </table>

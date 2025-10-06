@@ -20,6 +20,12 @@ function render(data: ViewerData) {
     onMatchClick: (match) => {
       emit('matchClicked', match.id)
     },
+    customRoundName: ({ roundNumber, roundCount }) =>
+      roundNumber === roundCount
+        ? 'Finals'
+        : roundNumber === roundCount - 1
+          ? 'Semis'
+          : `Round ${roundNumber}`,
   })
 }
 watch(() => props.brackets, render)
