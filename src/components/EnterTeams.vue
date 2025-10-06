@@ -60,12 +60,4 @@ function deleteTeam(index: number) {
   </div>
 </template>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&display=swap');
-
-.unicode-arrow {
-  font-family: 'Noto Sans Symbols 2';
-  font-size: 110%;
-  height: 1em;
-}
-</style>
+<style></style>
