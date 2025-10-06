@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 
 const props = defineProps<{
   initialTeams: string[]
@@ -10,12 +10,14 @@ const emit = defineEmits<{
 }>()
 
 const teams = ref<string[]>(props.initialTeams)
+const teamNameInput = useTemplateRef('teamNameInput')
 
 const newTeamName = ref('')
 function addNewTeam() {
   if (newTeamName.value.length > 0) {
     teams.value.push(newTeamName.value)
     newTeamName.value = ''
+    teamNameInput.value?.focus()
   }
 }
 
@@ -33,7 +35,12 @@ function deleteTeam(index: number) {
     <h2>Enter teams:</h2>
     <p>
       Enter team name:&MediumSpace;
-      <input v-model="newTeamName" placeholder="Team name" @keyup.enter="addNewTeam" />&MediumSpace;
+      <input
+        ref="teamNameInput"
+        v-model="newTeamName"
+        placeholder="Team name"
+        @keyup.enter="addNewTeam"
+      />&MediumSpace;
       <button :disabled="!newTeamName.length" @click="addNewTeam">Add team</button>
     </p>
     <table>
