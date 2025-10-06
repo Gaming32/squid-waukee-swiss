@@ -19,15 +19,12 @@ function addNewTeam() {
   }
 }
 
-function deleteTeam(index: number) {
-  teams.value.splice(index, 1)
+function deleteAllTeams() {
+  teams.value = []
 }
 
-function shiftTeam(index: number, direction: number) {
-  const newIndex = index + direction
-  if (newIndex >= 0 && newIndex <= teams.value.length) {
-    teams.value.splice(newIndex, 0, ...teams.value.splice(index, 1))
-  }
+function deleteTeam(index: number) {
+  teams.value.splice(index, 1)
 }
 </script>
 
@@ -42,24 +39,16 @@ function shiftTeam(index: number, direction: number) {
     <table>
       <thead>
         <tr>
-          <th>#</th>
+          <th><button class="icon-button" @click="deleteAllTeams">❌</button></th>
           <th>Team</th>
-          <th>Controls</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(team, teamNumber) in teams" :key="team">
-          <td>{{ teamNumber + 1 }}</td>
-          <td>{{ team }}</td>
           <td>
             <button class="icon-button" @click="() => deleteTeam(teamNumber)">❌</button>
-            <button class="icon-button unicode-arrow" @click="() => shiftTeam(teamNumber, -1)">
-              ⬆
-            </button>
-            <button class="icon-button unicode-arrow" @click="() => shiftTeam(teamNumber, 1)">
-              ⬇
-            </button>
           </td>
+          <td>{{ team }}</td>
         </tr>
       </tbody>
     </table>
