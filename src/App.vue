@@ -53,6 +53,18 @@ function createTournament(teams: string[]) {
   tournament.value = newTournament
 }
 
+function resetAndEdit() {
+  if (
+    confirm(
+      'This will reset all tournament progress and return to the Enter Teams screen. Are you sure?',
+    )
+  ) {
+    tournament.value = null
+    tournamentMatches.value = []
+    lockedSwissStandings.value = null
+  }
+}
+
 function dropTeam(teamId: string) {
   const team = tournament.value?.players.find((p) => p.id == teamId)
   if (!team) return
@@ -101,8 +113,14 @@ function nextRound() {
 
     <h1>Squid-Waukee</h1>
 
-    <EnterTeams v-if="tournament === null" @finish="createTournament" />
+    <EnterTeams
+      v-if="tournament === null"
+      :initial-teams="Object.values(teamNames)"
+      @finish="createTournament"
+    />
     <template v-else>
+      <button @click="resetAndEdit">Reset and edit teams</button>
+
       <TournamentStage
         v-if="tournament !== null"
         title="Swiss"

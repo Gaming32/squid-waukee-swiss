@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+const props = defineProps<{
+  initialTeams: string[]
+}>()
+
 const emit = defineEmits<{
   (e: 'finish', teams: string[]): void
 }>()
 
-const teams = ref<string[]>([])
+const teams = ref<string[]>(props.initialTeams)
 
 const newTeamName = ref('')
 function addNewTeam() {
@@ -49,8 +53,12 @@ function shiftTeam(index: number, direction: number) {
           <td>{{ team }}</td>
           <td>
             <button class="icon-button" @click="() => deleteTeam(teamNumber)">❌</button>
-            <button class="icon-button unicode-arrow" @click="() => shiftTeam(teamNumber, -1)">⬆</button>
-            <button class="icon-button unicode-arrow" @click="() => shiftTeam(teamNumber, 1)">⬇</button>
+            <button class="icon-button unicode-arrow" @click="() => shiftTeam(teamNumber, -1)">
+              ⬆
+            </button>
+            <button class="icon-button unicode-arrow" @click="() => shiftTeam(teamNumber, 1)">
+              ⬇
+            </button>
           </td>
         </tr>
       </tbody>
