@@ -22,6 +22,7 @@ const props = defineProps<{
   stageActive: boolean
   stageInfo: StageInfo
 
+  orderedTeams: string[]
   teamNames: { [id: string]: string }
   matches: Match[]
 }>()
@@ -32,7 +33,7 @@ const emit = defineEmits<{
   (e: 'nextRound'): void
 }>()
 
-const bracketRendererParticipants = computed(() =>
+const bracketRendererParticipants = computed<ViewerData['participants']>(() =>
   Object.entries(props.teamNames).map((team) => {
     return {
       id: team[0],
@@ -41,24 +42,41 @@ const bracketRendererParticipants = computed(() =>
     }
   }),
 )
-const bracketRendererMatches = computed(() =>
-  props.matches.map((match) => ({
-    id: match.id,
-    stage_id: 0,
-    group_id: 0,
-    round_id: match.round,
-    number: match.match,
-    child_count: props.bestOf,
-    status:
+const bracketRendererMatches = computed<ViewerData['matches']>(() => {
+  const firstMatch = props.matches.map((m) => m.round).sort()[0]
+  return props.matches.map((match) => {
+    function getOpponent(team: Match['player1']): ViewerData['matches'][0]['opponent1'] {
+      if (!team.id) {
+        return null
+      }
+      const teamIndex =
+        match.round === firstMatch ? props.orderedTeams.findIndex((t) => t == team.id) : -1
+      return {
+        id: team.id,
+        score: status === Status.Completed ? team.win : undefined,
+        position: teamIndex >= 0 ? teamIndex + 1 : undefined,
+        result: status !== Status.Completed ? undefined : team.win > team.loss ? 'win' : 'loss',
+      }
+    }
+    const status =
       !match.player1.id || !match.player2.id
         ? Status.Ready
         : match.active
           ? Status.Running
-          : Status.Completed,
-    opponent1: match.player1.id ? { id: match.player1.id, score: match.player1.win } : null,
-    opponent2: match.player2.id ? { id: match.player2.id, score: match.player2.win } : null,
-  })),
-)
+          : Status.Completed
+    return {
+      id: match.id,
+      stage_id: 0,
+      group_id: 0,
+      round_id: match.round,
+      number: match.match,
+      child_count: props.bestOf,
+      status,
+      opponent1: getOpponent(match.player1),
+      opponent2: getOpponent(match.player2),
+    }
+  })
+})
 const bracketRendererBrackets = computed<ViewerData>(() => {
   return {
     stages: [

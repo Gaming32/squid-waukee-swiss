@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ViewerData } from 'brackets-viewer'
+import type { MatchWithMetadata, ViewerData } from 'brackets-viewer'
 import { onMounted, useId, watch } from 'vue'
 
 const rendererId = useId()
@@ -13,13 +13,14 @@ const emit = defineEmits<{
 }>()
 
 function render(data: ViewerData) {
+  const clickCallback = (match: MatchWithMetadata) => emit('matchClicked', match.id)
   window.bracketsViewer.render(data, {
+    selector: `#${rendererId}`,
+    showPopoverOnMatchLabelClick: false,
     showRankingTable: false, // Not flexible enough; we do our own
     clear: true,
-    selector: `#${rendererId}`,
-    onMatchClick: (match) => {
-      emit('matchClicked', match.id)
-    },
+    onMatchClick: clickCallback,
+    onMatchLabelClick: clickCallback,
     customRoundName: ({ roundNumber, roundCount }) =>
       roundNumber === roundCount
         ? 'Finals'
@@ -45,7 +46,7 @@ onMounted(() => render(props.brackets))
     display: none;
   }
 
-  .round {
+  .round-robin .round {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;

@@ -69,10 +69,6 @@ defineExpose({ open })
 </template>
 
 <style scoped>
-::backdrop {
-  background-color: #fff8;
-}
-
 .upper-right {
   position: absolute;
   top: 0px;

@@ -132,6 +132,7 @@ function nextRound() {
             roundCount: swissRoundCount,
             standings: swissStandings,
           }"
+          :ordered-teams="[]"
           :team-names="teamNames"
           :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
           @match-clicked="reportScore"
@@ -146,6 +147,7 @@ function nextRound() {
           :best-of="PLAYOFFS_BEST_OF"
           :stage-active="tournament.status === 'stage-two'"
           :stageInfo="{ type: 'playoffs' }"
+          :ordered-teams="swissStandings.map((s) => s.player.id)"
           :team-names="teamNames"
           :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
           @match-clicked="reportScore"
