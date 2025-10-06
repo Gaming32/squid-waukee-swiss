@@ -68,7 +68,7 @@ defineExpose({ open })
   </dialog>
 </template>
 
-<style>
+<style scoped>
 ::backdrop {
   background-color: #fff8;
 }

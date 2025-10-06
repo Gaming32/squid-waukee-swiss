@@ -150,7 +150,7 @@ const hasDrops = computed(
   </div>
 </template>
 
-<style>
+<style scoped>
 .low-margin-title {
   margin-bottom: 0.2em;
 }

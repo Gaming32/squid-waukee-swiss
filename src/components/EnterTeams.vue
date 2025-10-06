@@ -66,5 +66,3 @@ function deleteTeam(index: number) {
     </p>
   </div>
 </template>
-
-<style></style>
