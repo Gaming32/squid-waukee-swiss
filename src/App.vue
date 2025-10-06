@@ -111,7 +111,7 @@ function nextRound() {
   <div>
     <ReportScoreModal ref="reportScoreModal" />
 
-    <h1>Squid-Waukee</h1>
+    <h1 class="low-margin-title">Squid-Waukee</h1>
 
     <EnterTeams
       v-if="tournament === null"
@@ -121,35 +121,46 @@ function nextRound() {
     <template v-else>
       <button @click="resetAndEdit">Reset and edit teams</button>
 
-      <TournamentStage
-        v-if="tournament !== null"
-        title="Swiss"
-        :best-of="SWISS_BEST_OF"
-        :stage-active="tournament.status === 'stage-one'"
-        :stageInfo="{
-          type: 'swiss',
-          roundCount: swissRoundCount,
-          standings: swissStandings,
-        }"
-        :team-names="teamNames"
-        :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
-        @match-clicked="reportScore"
-        @drop-team="dropTeam"
-        @next-round="nextRound"
-      />
+      <div v-if="tournament !== null">
+        <TournamentStage
+          class="stages-align"
+          title="Swiss"
+          :best-of="SWISS_BEST_OF"
+          :stage-active="tournament.status === 'stage-one'"
+          :stageInfo="{
+            type: 'swiss',
+            roundCount: swissRoundCount,
+            standings: swissStandings,
+          }"
+          :team-names="teamNames"
+          :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
+          @match-clicked="reportScore"
+          @drop-team="dropTeam"
+          @next-round="nextRound"
+        />
 
-      <TournamentStage
-        v-if="tournament !== null"
-        title="Playoffs"
-        :best-of="PLAYOFFS_BEST_OF"
-        :stage-active="tournament.status === 'stage-two'"
-        :stageInfo="{ type: 'playoffs' }"
-        :team-names="teamNames"
-        :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
-        @match-clicked="reportScore"
-      />
+        <TournamentStage
+          v-if="tournament.status === 'stage-two'"
+          class="stages-align"
+          title="Playoffs"
+          :best-of="PLAYOFFS_BEST_OF"
+          :stage-active="tournament.status === 'stage-two'"
+          :stageInfo="{ type: 'playoffs' }"
+          :team-names="teamNames"
+          :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
+          @match-clicked="reportScore"
+        />
+      </div>
     </template>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.low-margin-title {
+  margin-bottom: 0.17em;
+}
+
+.stages-align {
+  float: left;
+}
+</style>

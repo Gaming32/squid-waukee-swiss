@@ -38,6 +38,8 @@ onMounted(() => render(props.brackets))
 
 <style>
 .brackets-viewer {
+  padding-left: 20px;
+
   h1,
   h2 {
     display: none;
@@ -45,7 +47,7 @@ onMounted(() => render(props.brackets))
 
   .round {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
 
     h3 {
