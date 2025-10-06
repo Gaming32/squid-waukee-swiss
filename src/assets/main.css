@@ -4,6 +4,12 @@ body {
   font-family: Lexend, sans-serif;
 }
 
+@media print {
+  button:not(.icon-button) {
+    display: none;
+  }
+}
+
 table,
 th,
 td {
