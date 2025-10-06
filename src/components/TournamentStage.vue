@@ -85,7 +85,7 @@ const hasDrops = computed(
 
 <template>
   <div>
-    <h2>{{ title }}</h2>
+    <h2 class="low-margin-title">{{ title }}</h2>
 
     <BracketRenderer
       v-if="bracketRendererMatches.length"
@@ -151,8 +151,8 @@ const hasDrops = computed(
 </template>
 
 <style>
-.round-div {
-  display: inline-block;
+.low-margin-title {
+  margin-bottom: 0.2em;
 }
 
 .right-aligned-number {
