@@ -102,7 +102,7 @@ const hasDrops = computed(
 </script>
 
 <template>
-  <div>
+  <div class="stage-root">
     <h2 class="low-margin-title">{{ title }}</h2>
 
     <BracketRenderer
@@ -122,38 +122,40 @@ const hasDrops = computed(
         </button>
       </p>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Team</th>
-            <th>W/L</th>
-            <th>TB</th>
-            <th>OW%</th>
-            <th>W/L (M)</th>
-            <th>OW% (M)</th>
-            <th v-if="stageActive || hasDrops">Drop</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(team, rank) in stageInfo.standings" :key="team.player.id">
-            <td class="right-aligned-number">{{ rank + 1 }}.</td>
-            <td>{{ team.player.name }}</td>
-            <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
-            <td>{{ -team.lossesAgainstTiedScore }}</td>
-            <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
-            <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
-            <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
-            <td v-if="team.player.meta.dropped">Dropped</td>
-            <td v-else-if="stageActive">
-              <button class="icon-button" @click="() => emit('dropTeam', team.player.id)">
-                ❌
-              </button>
-            </td>
-            <td v-else-if="hasDrops"></td>
-          </tr>
-        </tbody>
-      </table>
+      <p class="overflow-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Team</th>
+              <th>W/L</th>
+              <th>TB</th>
+              <th>OW%</th>
+              <th>W/L (M)</th>
+              <th>OW% (M)</th>
+              <th v-if="stageActive || hasDrops">Drop</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(team, rank) in stageInfo.standings" :key="team.player.id">
+              <td class="right-aligned-number">{{ rank + 1 }}.</td>
+              <td>{{ team.player.name }}</td>
+              <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
+              <td>{{ -team.lossesAgainstTiedScore }}</td>
+              <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
+              <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
+              <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
+              <td v-if="team.player.meta.dropped">Dropped</td>
+              <td v-else-if="stageActive">
+                <button class="icon-button" @click="() => emit('dropTeam', team.player.id)">
+                  ❌
+                </button>
+              </td>
+              <td v-else-if="hasDrops"></td>
+            </tr>
+          </tbody>
+        </table>
+      </p>
 
       <p>
         <button
@@ -169,6 +171,15 @@ const hasDrops = computed(
 </template>
 
 <style scoped>
+.stage-root {
+  max-width: 100%;
+  margin-right: 30px;
+}
+
+.overflow-scroll {
+  overflow-x: auto;
+}
+
 .low-margin-title {
   margin-bottom: 0.2em;
 }

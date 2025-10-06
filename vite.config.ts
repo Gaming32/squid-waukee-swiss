@@ -4,11 +4,12 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import { qrcode } from 'vite-plugin-qrcode'
 
 // https://vite.dev/config/
 export default defineConfig({
   base: '/squid-waukee-swiss',
-  plugins: [vue(), vueDevTools(), nodePolyfills({ include: ['buffer'] })],
+  plugins: [vue(), vueDevTools(), qrcode(), nodePolyfills({ include: ['buffer'] })],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
