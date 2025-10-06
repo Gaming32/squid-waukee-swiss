@@ -32,7 +32,7 @@ function deleteTeam(index: number) {
   <div>
     <h2>Enter teams:</h2>
     <p>
-      Enter team name:
+      Enter team name:&MediumSpace;
       <input v-model="newTeamName" placeholder="Team name" @keyup.enter="addNewTeam" />&MediumSpace;
       <button :disabled="!newTeamName.length" @click="addNewTeam">Add team</button>
     </p>
@@ -54,7 +54,7 @@ function deleteTeam(index: number) {
     </table>
     <p>
       <button :disabled="teams.length < 2" @click="() => emit('finish', teams)">
-        Teams all set!
+        Teams all set! ({{ teams.length }} team{{ teams.length !== 1 ? 's' : '' }})
       </button>
     </p>
   </div>
