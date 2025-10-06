@@ -7,6 +7,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/squid-waukee-swiss',
   plugins: [vue(), vueDevTools(), nodePolyfills({ include: ['buffer'] })],
   resolve: {
     alias: {
