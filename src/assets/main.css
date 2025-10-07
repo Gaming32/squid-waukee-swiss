@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
 
+.brackets-viewer {
+  --primary-background: var(--wa-color-surface-default);
+  --secondary-background: var(--wa-color-fill-normal);
+  --match-background: var(--primary-background);
+  --font-color: var(--wa-color-text-normal);
+}
+
 body {
   font-family: Lexend, sans-serif;
   padding: 15px;
@@ -13,29 +20,6 @@ body {
 
 button:disabled {
   cursor: not-allowed;
-}
-
-table,
-th,
-td {
-  border: 1px solid;
-}
-
-table {
-  border-collapse: collapse;
-}
-
-th {
-  background-color: #ddd;
-}
-
-tr:hover {
-  background-color: #eee;
-}
-
-th,
-td {
-  padding: 5px;
 }
 
 .icon-button {

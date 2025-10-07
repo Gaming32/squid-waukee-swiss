@@ -44,7 +44,7 @@ function deleteTeam(index: number) {
       />&MediumSpace;
       <button class="wa-brand" :disabled="!newTeamName.length" @click="addNewTeam">Add team</button>
     </p>
-    <table class="inline-table">
+    <table class="inline-table wa-hover-rows wa-zebra-rows">
       <thead>
         <tr>
           <th class="centered-horizontally">
@@ -77,7 +77,6 @@ function deleteTeam(index: number) {
 
 .inline-table {
   display: inline-block;
-  border: none;
 }
 
 .centered-horizontally {

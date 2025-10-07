@@ -11,6 +11,11 @@ import {
 import ReportScoreModal from './components/ReportScoreModal.vue'
 import TournamentStage from './components/TournamentStage.vue'
 import storageAvailable from 'storage-available'
+import { useDark } from '@vueuse/core'
+
+useDark({
+  valueDark: 'wa-dark',
+})
 
 const reportScoreModal = useTemplateRef('reportScoreModal')
 
