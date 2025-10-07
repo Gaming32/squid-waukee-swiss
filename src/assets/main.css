@@ -2,7 +2,7 @@
 
 .brackets-viewer {
   --primary-background: var(--wa-color-surface-default);
-  --secondary-background: var(--wa-color-fill-normal);
+  --secondary-background: var(--wa-color-fill-quiet);
   --match-background: var(--primary-background);
   --font-color: var(--wa-color-text-normal);
 }

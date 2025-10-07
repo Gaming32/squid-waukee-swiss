@@ -25,10 +25,13 @@ const props = defineProps<{
   orderedTeams: string[]
   teamNames: { [id: string]: string }
   matches: Match[]
+
+  highlightedTeam?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'matchClicked', matchId: string, bestOf: number): void
+  (e: 'hover', team?: string): void
   (e: 'dropTeam', teamId: string): void
   (e: 'nextRound'): void
 }>()
@@ -115,7 +118,9 @@ const hasDrops = computed(
     <BracketRenderer
       v-if="bracketRendererMatches.length"
       :brackets="bracketRendererBrackets"
+      :highlight-team="highlightedTeam"
       @match-clicked="(matchId) => emit('matchClicked', matchId.toString(), props.bestOf)"
+      @hover="(team) => emit('hover', team)"
     />
 
     <template v-if="stageInfo.type === 'swiss'">
@@ -143,7 +148,13 @@ const hasDrops = computed(
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(team, rank) in stageInfo.standings" :key="team.player.id">
+          <tr
+            v-for="(team, rank) in stageInfo.standings"
+            :key="team.player.id"
+            :class="team.player.id === highlightedTeam ? 'hovered-row' : ''"
+            @mouseenter="emit('hover', team.player.id)"
+            @mouseleave="emit('hover')"
+          >
             <td class="right-aligned-number">{{ rank + 1 }}.</td>
             <td>{{ team.player.name }}</td>
             <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
@@ -179,13 +190,17 @@ const hasDrops = computed(
   margin-right: 30px;
 }
 
+.low-margin-title {
+  margin-bottom: 0.2em;
+}
+
 .swiss-table {
   overflow-x: auto;
   width: fit-content;
 }
 
-.low-margin-title {
-  margin-bottom: 0.2em;
+.hovered-row {
+  background-color: var(--wa-color-fill-quiet);
 }
 
 .right-aligned-number {

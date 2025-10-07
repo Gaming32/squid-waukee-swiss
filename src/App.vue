@@ -31,6 +31,8 @@ const swissStandings = computed(
   () => lockedSwissStandings.value ?? tournament.value?.standings(false) ?? [],
 )
 
+const highlightedTeam = ref<string>()
+
 function assignTournament(newTournament: CustomStandingsTournament) {
   tournamentMatches.value = newTournament.matches = reactive(newTournament.matches)
   teamNames.value = Object.fromEntries(newTournament.players.map((p) => [p.id, p.name]))
@@ -193,7 +195,9 @@ function nextRound() {
           :ordered-teams="[]"
           :team-names="teamNames"
           :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
+          :highlighted-team="highlightedTeam"
           @match-clicked="reportScore"
+          @hover="(team) => (highlightedTeam = team)"
           @drop-team="dropTeam"
           @next-round="nextRound"
         />
@@ -208,7 +212,9 @@ function nextRound() {
           :ordered-teams="swissStandings.map((s) => s.player.id)"
           :team-names="teamNames"
           :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
+          :highlighted-team="highlightedTeam"
           @match-clicked="reportScore"
+          @hover="(team) => (highlightedTeam = team)"
         />
       </div>
     </template>
