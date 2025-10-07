@@ -107,6 +107,7 @@ function createTournament(teams: string[]) {
 
 function resetAndEdit() {
   if (
+    (tournament.value?.matches.every((m) => m.active) && tournament.value?.round === 1) ||
     confirm(
       'This will reset all tournament progress and return to the Enter Teams screen. Are you sure?',
     )
