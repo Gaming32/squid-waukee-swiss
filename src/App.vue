@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, shallowRef, useTemplateRef } from 'vue'
 import EnterTeams from './components/EnterTeams.vue'
-import { Match, Player } from 'tournament-organizer/components'
+import { Manager, Match, Player } from 'tournament-organizer/components'
 import {
   CustomStandingsTournament,
   PLAYOFFS_BEST_OF,
@@ -10,8 +10,11 @@ import {
 } from './tournament'
 import ReportScoreModal from './components/ReportScoreModal.vue'
 import TournamentStage from './components/TournamentStage.vue'
+import storageAvailable from 'storage-available'
 
 const reportScoreModal = useTemplateRef('reportScoreModal')
+
+const tournamentManager = new Manager()
 
 const tournament = shallowRef<CustomStandingsTournament | null>(null)
 const tournamentMatches = ref<Match[]>([])
@@ -23,34 +26,76 @@ const swissStandings = computed(
   () => lockedSwissStandings.value ?? tournament.value?.standings(false) ?? [],
 )
 
-function createTournament(teams: string[]) {
-  const newTournament = new CustomStandingsTournament('squid-waukee', 'Squid Waukee')
-  newTournament.settings = {
-    players: teams.map((team, index) => {
-      const player = new Player(index.toString(), team)
-      player.meta.dropped = false
-      return player
-    }),
-    sorting: 'none',
-    scoring: {
-      bestOf: SWISS_BEST_OF,
-    },
-    stageOne: {
-      format: 'swiss',
-    },
-    stageTwo: {
-      format: 'single-elimination',
-      advance: {
-        value: 4,
-        method: 'rank',
-      },
-    },
-  }
-  newTournament.start()
-
+function assignTournament(newTournament: CustomStandingsTournament) {
   tournamentMatches.value = newTournament.matches = reactive(newTournament.matches)
   teamNames.value = Object.fromEntries(newTournament.players.map((p) => [p.id, p.name]))
   tournament.value = newTournament
+}
+
+const { saveTournament, saveSwissStandings } = storageAvailable('localStorage')
+  ? (() => {
+      const TOURNAMENT_KEY = 'tournament'
+      const SWISS_STANDINGS_KEY = 'swiss-standings'
+      const storedTournament = localStorage.getItem(TOURNAMENT_KEY)
+      if (storedTournament) {
+        assignTournament(
+          new CustomStandingsTournament(
+            tournamentManager.reloadTournament(JSON.parse(storedTournament)),
+          ),
+        )
+
+        const storedSwissStandings = localStorage.getItem(SWISS_STANDINGS_KEY)
+        if (storedSwissStandings) {
+          lockedSwissStandings.value = JSON.parse(storedSwissStandings)
+        }
+      }
+      return {
+        saveTournament: () => {
+          if (tournament.value === null) {
+            localStorage.removeItem(TOURNAMENT_KEY)
+          } else {
+            localStorage.setItem(TOURNAMENT_KEY, JSON.stringify(tournament.value))
+          }
+        },
+        saveSwissStandings: () => {
+          if (lockedSwissStandings.value === null) {
+            localStorage.removeItem(SWISS_STANDINGS_KEY)
+          } else {
+            localStorage.setItem(SWISS_STANDINGS_KEY, JSON.stringify(lockedSwissStandings.value))
+          }
+        },
+      }
+    })()
+  : { saveTournament: () => {}, saveSwissStandings: () => {} }
+
+function createTournament(teams: string[]) {
+  const newTournament = new CustomStandingsTournament(
+    tournamentManager.createTournament('Squid Waukee', {
+      players: teams.map((team, index) => {
+        const player = new Player(index.toString(), team)
+        player.meta.dropped = false
+        return player
+      }),
+      sorting: 'none',
+      scoring: {
+        bestOf: SWISS_BEST_OF,
+      },
+      stageOne: {
+        format: 'swiss',
+      },
+      stageTwo: {
+        format: 'single-elimination',
+        advance: {
+          value: 4,
+          method: 'rank',
+        },
+      },
+    }),
+  )
+  newTournament.start()
+
+  assignTournament(newTournament)
+  saveTournament()
 }
 
 function resetAndEdit() {
@@ -62,6 +107,8 @@ function resetAndEdit() {
     tournament.value = null
     tournamentMatches.value = []
     lockedSwissStandings.value = null
+    saveTournament()
+    saveSwissStandings()
   }
 }
 
@@ -70,6 +117,7 @@ function dropTeam(teamId: string) {
   if (!team) return
   team.meta.dropped = true
   tournament.value?.removePlayer(teamId)
+  saveTournament()
 }
 
 function reportScore(matchId: string, bestOf: number) {
@@ -92,6 +140,7 @@ function reportScore(matchId: string, bestOf: number) {
     (scores) => {
       if (!scores) return
       tournament.value!.enterResult(matchId, scores.score1, scores.score2)
+      saveTournament()
     },
   )
 }
@@ -102,8 +151,10 @@ function nextRound() {
   tournamentMatches.value = tournament.value!.matches = reactive(tournament.value!.matches)
   if (tournament.value?.status == 'stage-two') {
     lockedSwissStandings.value = oldStandings
+    saveSwissStandings()
     tournament.value.scoring.bestOf = PLAYOFFS_BEST_OF
   }
+  saveTournament()
 }
 </script>
 

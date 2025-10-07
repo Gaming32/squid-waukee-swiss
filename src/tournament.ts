@@ -9,6 +9,11 @@ export interface AdditionalStandingsValues extends StandingsValues {
 }
 
 export class CustomStandingsTournament extends Tournament {
+  constructor(other: Tournament) {
+    super(other.id, other.name)
+    Object.assign(this, other)
+  }
+
   standings(activeOnly: boolean = true): AdditionalStandingsValues[] {
     const standings: AdditionalStandingsValues[] = super.standings(activeOnly).map((x) => {
       return {

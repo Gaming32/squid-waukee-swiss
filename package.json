@@ -16,6 +16,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "storage-available": "^1.1.0",
     "tournament-organizer": "^3.9.1",
     "vite-plugin-node-polyfills": "^0.24.0",
     "vue": "^3.5.22"
