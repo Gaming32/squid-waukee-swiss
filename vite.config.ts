@@ -8,7 +8,7 @@ import { qrcode } from 'vite-plugin-qrcode'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/squid-waukee-swiss',
+  base: '',
   plugins: [vue(), vueDevTools(), qrcode(), nodePolyfills({ include: ['buffer'] })],
   resolve: {
     alias: {
