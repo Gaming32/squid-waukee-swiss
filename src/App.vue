@@ -119,14 +119,6 @@ function resetAndEdit() {
   }
 }
 
-function dropTeam(teamId: string) {
-  const team = tournament.value?.players.find((p) => p.id == teamId)
-  if (!team) return
-  team.meta.dropped = true
-  tournament.value?.removePlayer(teamId)
-  saveTournament()
-}
-
 function reportScore(matchId: string, bestOf: number) {
   const match = tournament.value?.matches.find((m) => m.id == matchId)
   if (!match || !match.player1.id || !match.player2.id || !match.active) {
@@ -150,6 +142,18 @@ function reportScore(matchId: string, bestOf: number) {
       saveTournament()
     },
   )
+}
+
+function hover(team?: string) {
+  highlightedTeam.value = team
+}
+
+function dropTeam(teamId: string) {
+  const team = tournament.value?.players.find((p) => p.id == teamId)
+  if (!team) return
+  team.meta.dropped = true
+  tournament.value?.removePlayer(teamId)
+  saveTournament()
 }
 
 function nextRound() {
@@ -197,7 +201,7 @@ function nextRound() {
           :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
           :highlighted-team="highlightedTeam"
           @match-clicked="reportScore"
-          @hover="(team) => (highlightedTeam = team)"
+          @hover="hover"
           @drop-team="dropTeam"
           @next-round="nextRound"
         />
@@ -214,7 +218,7 @@ function nextRound() {
           :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
           :highlighted-team="highlightedTeam"
           @match-clicked="reportScore"
-          @hover="(team) => (highlightedTeam = team)"
+          @hover="hover"
         />
       </div>
     </template>

@@ -134,42 +134,46 @@ const hasDrops = computed(
         </button>
       </p>
 
-      <table class="swiss-table wa-hover-rows wa-zebra-rows">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Team</th>
-            <th>W/L</th>
-            <th>TB</th>
-            <th>OW%</th>
-            <th>W/L (M)</th>
-            <th>OW% (M)</th>
-            <th v-if="stageActive || hasDrops">Drop</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="(team, rank) in stageInfo.standings"
-            :key="team.player.id"
-            :class="team.player.id === highlightedTeam ? 'hovered-row' : ''"
-            @mouseenter="emit('hover', team.player.id)"
-            @mouseleave="emit('hover')"
-          >
-            <td class="right-aligned-number">{{ rank + 1 }}.</td>
-            <td>{{ team.player.name }}</td>
-            <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
-            <td>{{ -team.lossesAgainstTiedScore }}</td>
-            <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
-            <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
-            <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
-            <td v-if="team.player.meta.dropped">Dropped</td>
-            <td v-else-if="stageActive">
-              <a class="icon-button" @click="() => emit('dropTeam', team.player.id)"> ❌ </a>
-            </td>
-            <td v-else-if="hasDrops"></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="swiss-table">
+        <table class="swiss-table wa-hover-rows wa-zebra-rows">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Team</th>
+              <th>W/L</th>
+              <th>TB</th>
+              <th>OW%</th>
+              <th>W/L (M)</th>
+              <th>OW% (M)</th>
+              <th v-if="stageActive || hasDrops">Drop</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(team, rank) in stageInfo.standings"
+              :key="team.player.id"
+              :class="team.player.id === highlightedTeam ? 'hovered-row' : ''"
+              @mouseenter="emit('hover', team.player.id)"
+              @mouseleave="emit('hover')"
+              @touchstart="emit('hover', team.player.id)"
+              @touchend="emit('hover')"
+            >
+              <td class="right-aligned-number">{{ rank + 1 }}.</td>
+              <td>{{ team.player.name }}</td>
+              <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
+              <td>{{ -team.lossesAgainstTiedScore }}</td>
+              <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
+              <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
+              <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
+              <td v-if="team.player.meta.dropped">Dropped</td>
+              <td v-else-if="stageActive">
+                <a class="icon-button" @click="() => emit('dropTeam', team.player.id)"> ❌ </a>
+              </td>
+              <td v-else-if="hasDrops"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <p>
         <button
@@ -196,7 +200,7 @@ const hasDrops = computed(
 
 .swiss-table {
   overflow-x: auto;
-  width: fit-content;
+  margin-bottom: 1em;
 }
 
 .hovered-row {

@@ -36,6 +36,15 @@ function render(data: ViewerData) {
     for (const element of elements) {
       element.addEventListener('mouseenter', () => emit('hover', team))
       element.addEventListener('mouseleave', () => emit('hover'))
+      element.addEventListener('touchstart', (e) => {
+        e.preventDefault()
+        emit('hover', team)
+      })
+      element.addEventListener('touchend', (e) => {
+        e.preventDefault()
+        emit('hover')
+        element.click()
+      })
     }
   }
 }
