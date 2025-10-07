@@ -44,7 +44,7 @@ function deleteTeam(index: number) {
       />&MediumSpace;
       <button class="wa-brand" :disabled="!newTeamName.length" @click="addNewTeam">Add team</button>
     </p>
-    <table class="inline-table wa-hover-rows wa-zebra-rows">
+    <table v-if="teams.length" class="inline-table wa-hover-rows wa-zebra-rows">
       <thead>
         <tr>
           <th class="centered-horizontally">
@@ -62,9 +62,10 @@ function deleteTeam(index: number) {
         </tr>
       </tbody>
     </table>
+    <p v-else>No teams added yet</p>
     <p>
       <button class="wa-success" :disabled="teams.length < 2" @click="() => emit('finish', teams)">
-        Teams all set! ({{ teams.length }} team{{ teams.length !== 1 ? 's' : '' }})
+        Teams all set! {{ teams.length >= 2 ? `(${teams.length} teams)` : '' }}
       </button>
     </p>
   </div>
