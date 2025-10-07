@@ -50,20 +50,34 @@ defineExpose({ open })
 <template>
   <dialog @keyup.esc="cancel" ref="dialogRoot">
     <div class="upper-right">
-      <button class="icon-button" @click="cancel">[X]</button>
+      <a class="icon-button" @click="cancel">[X]</a>
     </div>
 
     <p>Enter the score of the matches:</p>
     <p>
       {{ team1 }}:
-      <input v-model.number="score1" type="number" min="0" :max="maxScore" @keyup.enter="submit" />
+      <input
+        class="wa-size-s"
+        v-model.number="score1"
+        type="number"
+        min="0"
+        :max="maxScore"
+        @keyup.enter="submit"
+      />
     </p>
     <p>
       {{ team2 }}:
-      <input v-model.number="score2" type="number" min="0" :max="maxScore" @keyup.enter="submit" />
+      <input
+        class="wa-size-s"
+        v-model.number="score2"
+        type="number"
+        min="0"
+        :max="maxScore"
+        @keyup.enter="submit"
+      />
     </p>
     <p>
-      <button :disabled="!canSubmit" @click="submit">Submit</button>
+      <button class="wa-brand" :disabled="!canSubmit" @click="submit">Submit</button>
     </p>
   </dialog>
 </template>
@@ -71,7 +85,11 @@ defineExpose({ open })
 <style scoped>
 .upper-right {
   position: absolute;
-  top: 0px;
-  right: 0px;
+  top: 10px;
+  right: 10px;
+}
+
+input[type='number'] {
+  max-width: calc(15px + 4em);
 }
 </style>

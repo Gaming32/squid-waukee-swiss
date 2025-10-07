@@ -39,7 +39,7 @@ onMounted(() => render(props.brackets))
 
 <style>
 .brackets-viewer {
-  padding-inline: 20px;
+  padding-inline: 10px;
 
   h1,
   h2 {
@@ -47,7 +47,7 @@ onMounted(() => render(props.brackets))
   }
 
   .round-robin .round {
-    --grid-columns: calc(clamp(2, round(down, 100vw / var(--match-width)), 4));
+    --grid-columns: calc(clamp(2, round(down, 50vw / var(--match-width)), 4));
 
     display: grid;
     grid-template-columns: repeat(var(--grid-columns), var(--match-width));

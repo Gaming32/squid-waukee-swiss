@@ -32,37 +32,55 @@ function deleteTeam(index: number) {
 
 <template>
   <div>
-    <h2>Enter teams:</h2>
+    <h2>Enter teams</h2>
+    <div>Enter team name:</div>
     <p>
-      Enter team name:&MediumSpace;
       <input
+        class="small-input"
         ref="teamNameInput"
         v-model="newTeamName"
         placeholder="Team name"
         @keyup.enter="addNewTeam"
       />&MediumSpace;
-      <button :disabled="!newTeamName.length" @click="addNewTeam">Add team</button>
+      <button class="wa-brand" :disabled="!newTeamName.length" @click="addNewTeam">Add team</button>
     </p>
-    <table>
+    <table class="inline-table">
       <thead>
         <tr>
-          <th><button class="icon-button" @click="deleteAllTeams">❌</button></th>
-          <th>Team</th>
+          <th class="centered-horizontally">
+            <a class="icon-button" @click="deleteAllTeams">❌</a>
+          </th>
+          <th class="centered-horizontally">Team</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(team, teamNumber) in teams" :key="team">
           <td>
-            <button class="icon-button" @click="() => deleteTeam(teamNumber)">❌</button>
+            <a class="icon-button" @click="() => deleteTeam(teamNumber)">❌</a>
           </td>
           <td>{{ team }}</td>
         </tr>
       </tbody>
     </table>
     <p>
-      <button :disabled="teams.length < 2" @click="() => emit('finish', teams)">
+      <button class="wa-success" :disabled="teams.length < 2" @click="() => emit('finish', teams)">
         Teams all set! ({{ teams.length }} team{{ teams.length !== 1 ? 's' : '' }})
       </button>
     </p>
   </div>
 </template>
+
+<style scoped>
+.small-input {
+  max-width: 225px;
+}
+
+.inline-table {
+  display: inline-block;
+  border: none;
+}
+
+.centered-horizontally {
+  text-align: center;
+}
+</style>

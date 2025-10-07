@@ -170,7 +170,9 @@ function nextRound() {
       @finish="createTournament"
     />
     <template v-else>
-      <button @click="resetAndEdit">Reset and edit teams</button>
+      <button class="wa-size-s wa-danger padded-button" @click="resetAndEdit">
+        Reset and edit teams
+      </button>
 
       <div v-if="tournament !== null">
         <TournamentStage
@@ -211,6 +213,10 @@ function nextRound() {
 <style scoped>
 .low-margin-title {
   margin-bottom: 0.17em;
+}
+
+.padded-button {
+  margin-bottom: 1em;
 }
 
 .stages-align {

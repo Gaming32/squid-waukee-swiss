@@ -94,6 +94,13 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
     participants: bracketRendererParticipants.value,
   }
 })
+
+const anyMatchesActive = computed(() => props.matches.some((m) => m.active))
+const finalSwissRound = computed(
+  () =>
+    props.stageInfo.type === 'swiss' &&
+    Math.max(...props.matches.map((m) => m.round)) === props.stageInfo.roundCount,
+)
 const hasDrops = computed(
   () =>
     props.stageInfo.type === 'swiss' &&
@@ -114,53 +121,49 @@ const hasDrops = computed(
     <template v-if="stageInfo.type === 'swiss'">
       <p>
         <button
-          v-if="stageActive && Math.max(...matches.map((m) => m.round)) < stageInfo.roundCount"
-          :disabled="matches.some((m) => m.active)"
+          v-if="stageActive && !finalSwissRound && !anyMatchesActive"
+          class="wa-brand"
           @click="() => emit('nextRound')"
         >
           Next round!
         </button>
       </p>
 
-      <p class="overflow-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Team</th>
-              <th>W/L</th>
-              <th>TB</th>
-              <th>OW%</th>
-              <th>W/L (M)</th>
-              <th>OW% (M)</th>
-              <th v-if="stageActive || hasDrops">Drop</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(team, rank) in stageInfo.standings" :key="team.player.id">
-              <td class="right-aligned-number">{{ rank + 1 }}.</td>
-              <td>{{ team.player.name }}</td>
-              <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
-              <td>{{ -team.lossesAgainstTiedScore }}</td>
-              <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
-              <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
-              <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
-              <td v-if="team.player.meta.dropped">Dropped</td>
-              <td v-else-if="stageActive">
-                <button class="icon-button" @click="() => emit('dropTeam', team.player.id)">
-                  ❌
-                </button>
-              </td>
-              <td v-else-if="hasDrops"></td>
-            </tr>
-          </tbody>
-        </table>
-      </p>
+      <table class="swiss-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Team</th>
+            <th>W/L</th>
+            <th>TB</th>
+            <th>OW%</th>
+            <th>W/L (M)</th>
+            <th>OW% (M)</th>
+            <th v-if="stageActive || hasDrops">Drop</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(team, rank) in stageInfo.standings" :key="team.player.id">
+            <td class="right-aligned-number">{{ rank + 1 }}.</td>
+            <td>{{ team.player.name }}</td>
+            <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
+            <td>{{ -team.lossesAgainstTiedScore }}</td>
+            <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
+            <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
+            <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
+            <td v-if="team.player.meta.dropped">Dropped</td>
+            <td v-else-if="stageActive">
+              <a class="icon-button" @click="() => emit('dropTeam', team.player.id)"> ❌ </a>
+            </td>
+            <td v-else-if="hasDrops"></td>
+          </tr>
+        </tbody>
+      </table>
 
       <p>
         <button
-          v-if="stageActive && Math.max(...matches.map((m) => m.round)) === stageInfo.roundCount"
-          :disabled="matches.some((m) => m.active)"
+          v-if="stageActive && finalSwissRound && !anyMatchesActive"
+          class="wa-success"
           @click="() => emit('nextRound')"
         >
           Onto playoffs!
@@ -176,8 +179,9 @@ const hasDrops = computed(
   margin-right: 30px;
 }
 
-.overflow-scroll {
+.swiss-table {
   overflow-x: auto;
+  width: fit-content;
 }
 
 .low-margin-title {
