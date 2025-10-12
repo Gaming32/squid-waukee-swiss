@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import { computed, reactive, ref, shallowRef, useTemplateRef } from 'vue'
-import EnterTeams from './components/EnterTeams.vue'
+import { useDark } from '@vueuse/core'
+import { generateRounds } from 'maps.iplabs.ink/src/helpers/MapGeneration'
+import { maps as allMaps } from 'maps.iplabs.ink/src/helpers/MapMode'
+import type {
+  AppContext as MapData,
+  MapPool,
+} from 'maps.iplabs.ink/src/types-interfaces/Interfaces'
+import type { Mode, PlayStyle } from 'maps.iplabs.ink/src/types-interfaces/Types'
+import storageAvailable from 'storage-available'
 import { Manager, Match, Player } from 'tournament-organizer/components'
+import type { LoadableTournamentValues } from 'tournament-organizer/interfaces'
+import { computed, reactive, ref, shallowRef, useTemplateRef } from 'vue'
+import ReportScoreModal from './components/ReportScoreModal.vue'
+import SetupTourney from './components/SetupTourney.vue'
+import TournamentStage from './components/TournamentStage.vue'
 import {
   CustomStandingsTournament,
   PLAYOFFS_BEST_OF,
   SWISS_BEST_OF,
   type AdditionalStandingsValues,
 } from './tournament'
-import ReportScoreModal from './components/ReportScoreModal.vue'
-import TournamentStage from './components/TournamentStage.vue'
-import storageAvailable from 'storage-available'
-import { useDark } from '@vueuse/core'
 
 useDark({
   valueDark: 'wa-dark',
@@ -25,6 +33,28 @@ const tournament = shallowRef<CustomStandingsTournament | null>(null)
 const tournamentMatches = ref<Match[]>([])
 const teamNames = ref<{ [id: string]: string }>({})
 const swissRoundCount = computed(() => tournament.value?.stageOne.rounds ?? 0)
+
+const mapData = ref<MapData>({
+  mapPool: {
+    tw: [],
+    sz: [...allMaps],
+    tc: [...allMaps],
+    rm: [...allMaps],
+    cb: [...allMaps],
+  },
+  rounds: [],
+})
+const currentRound = computed(() => {
+  const firstIncompleteRound = Math.min(
+    ...tournamentMatches.value.filter((m) => m.active).map((m) => m.round),
+  )
+  return mapData.value.rounds[firstIncompleteRound - 1]
+})
+const currentRoundMapList = computed(() =>
+  currentRound.value?.games.map((mapMode) =>
+    mapMode === 'counterpick' ? 'Counterpick' : `${mapMode.mode.toUpperCase()} ${mapMode.map}`,
+  ),
+)
 
 const lockedSwissStandings = ref<AdditionalStandingsValues[] | null>(null)
 const swissStandings = computed(
@@ -42,14 +72,20 @@ function assignTournament(newTournament: CustomStandingsTournament) {
 const { saveTournament, saveSwissStandings } = storageAvailable('localStorage')
   ? (() => {
       const TOURNAMENT_KEY = 'tournament'
+      const MAP_DATA_KEY = 'map-data'
       const SWISS_STANDINGS_KEY = 'swiss-standings'
       const storedTournament = localStorage.getItem(TOURNAMENT_KEY)
       if (storedTournament) {
+        const tournamentData: LoadableTournamentValues & (MapData | object) =
+          JSON.parse(storedTournament)
         assignTournament(
-          new CustomStandingsTournament(
-            tournamentManager.reloadTournament(JSON.parse(storedTournament)),
-          ),
+          new CustomStandingsTournament(tournamentManager.reloadTournament(tournamentData)),
         )
+
+        const storedMapData = localStorage.getItem(MAP_DATA_KEY)
+        if (storedMapData) {
+          mapData.value = JSON.parse(storedMapData)
+        }
 
         const storedSwissStandings = localStorage.getItem(SWISS_STANDINGS_KEY)
         if (storedSwissStandings) {
@@ -60,8 +96,10 @@ const { saveTournament, saveSwissStandings } = storageAvailable('localStorage')
         saveTournament: () => {
           if (tournament.value === null) {
             localStorage.removeItem(TOURNAMENT_KEY)
+            localStorage.removeItem(MAP_DATA_KEY)
           } else {
             localStorage.setItem(TOURNAMENT_KEY, JSON.stringify(tournament.value))
+            localStorage.setItem(MAP_DATA_KEY, JSON.stringify(mapData.value))
           }
         },
         saveSwissStandings: () => {
@@ -75,7 +113,7 @@ const { saveTournament, saveSwissStandings } = storageAvailable('localStorage')
     })()
   : { saveTournament: () => {}, saveSwissStandings: () => {} }
 
-function createTournament(teams: string[]) {
+function createTournament(mapPool: MapPool, teams: string[]) {
   const newTournament = new CustomStandingsTournament(
     tournamentManager.createTournament('Squid Waukee', {
       players: teams.map((team, index) => {
@@ -102,6 +140,35 @@ function createTournament(teams: string[]) {
   newTournament.start()
 
   assignTournament(newTournament)
+  mapData.value = {
+    mapPool,
+    rounds: generateRounds(
+      new Array(newTournament.stageOne.rounds)
+        .fill(undefined)
+        .map((_, index) => ({
+          name: `Swiss R${index + 1}`,
+          playStyle: 'bestOf' as PlayStyle,
+          games: new Array(SWISS_BEST_OF).fill('counterpick'),
+        }))
+        .concat([
+          {
+            name: 'Semifinals',
+            playStyle: 'bestOf' as PlayStyle,
+            games: new Array(PLAYOFFS_BEST_OF).fill('counterpick'),
+          },
+          {
+            name: 'Finals',
+            playStyle: 'bestOf' as PlayStyle,
+            games: new Array(PLAYOFFS_BEST_OF).fill('counterpick'),
+          },
+        ]),
+      mapPool,
+      'Replace All',
+      Object.keys(mapPool).filter((m) => mapPool[m as keyof MapPool].length) as Mode[],
+      [],
+      [],
+    ),
+  }
   saveTournament()
 }
 
@@ -176,8 +243,9 @@ function nextRound() {
 
     <h1 class="low-margin-title">Squid-Waukee</h1>
 
-    <EnterTeams
+    <SetupTourney
       v-if="tournament === null"
+      :initial-map-pool="mapData.mapPool"
       :initial-teams="Object.values(teamNames)"
       @finish="createTournament"
     />
@@ -186,7 +254,7 @@ function nextRound() {
         Reset and edit teams
       </button>
 
-      <div v-if="tournament !== null">
+      <div v-if="tournament">
         <TournamentStage
           class="stages-align"
           title="Swiss"
@@ -221,6 +289,15 @@ function nextRound() {
           @match-clicked="reportScore"
           @hover="hover"
         />
+
+        <div v-if="currentRound" class="stages-align">
+          <h3>{{ currentRound.name }} Map Pool</h3>
+          <ul>
+            <li v-for="mapMode in currentRoundMapList" :key="mapMode">
+              {{ mapMode }}
+            </li>
+          </ul>
+        </div>
       </div>
     </template>
   </div>

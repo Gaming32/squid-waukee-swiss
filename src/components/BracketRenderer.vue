@@ -72,7 +72,7 @@ watch(
 
 <style>
 .brackets-viewer {
-  padding-inline: 10px;
+  padding-inline: 20px;
 
   h1,
   h2 {
