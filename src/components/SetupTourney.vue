@@ -36,7 +36,8 @@ const mapPool = ref<MapPool>(props.initialMapPool)
 const totalMapModes = computed(() => Object.values(mapPool.value).flatMap((x) => x).length)
 function importMapPoolFromUrl() {
   const mapPoolUrlText = prompt(
-    'Enter a URL with a map pool from sendou.ink/maps or maps.iplabs.ink',
+    'Enter a URL with a map pool from sendou.ink/maps or maps.iplabs.ink.\n' +
+      'You can get a URL like this by copying the URL bar while on either of these pages.',
   )
   if (!mapPoolUrlText) return
   const mapPoolUrl = URL.parse(mapPoolUrlText)
@@ -135,12 +136,12 @@ function deleteTeam(index: number) {
           {{ modeAbbreviationToWords(mode) }}: {{ pluralFormat(maps.length, 'map') }}
         </li>
       </ul>
-      <p>
-        <button class="wa-brand" @click="importMapPoolFromUrl">Import from URL</button>&MediumSpace;
-        <button class="wa-brand" @click="importMapPoolFromJson">
-          Import from maps.iplabs.com JSON
-        </button>
-      </p>
+      <button class="wa-brand block-button" @click="importMapPoolFromUrl">
+        Import from map pool URL
+      </button>
+      <button class="wa-brand block-button" @click="importMapPoolFromJson">
+        Import from maps.iplabs.com JSON
+      </button>
     </details>
 
     <details class="narrow-element" open>
@@ -211,6 +212,11 @@ input[type='number'] {
   text-decoration: underline;
   text-decoration-style: dotted;
   text-underline-offset: 0.2em;
+}
+
+.block-button {
+  display: block;
+  margin-block: 10px;
 }
 
 .small-input {
