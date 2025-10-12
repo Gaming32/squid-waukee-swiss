@@ -9,16 +9,14 @@ import type {
 import type { Mode, PlayStyle } from 'maps.iplabs.ink/src/types-interfaces/Types'
 import storageAvailable from 'storage-available'
 import { Manager, Match, Player } from 'tournament-organizer/components'
-import type { LoadableTournamentValues } from 'tournament-organizer/interfaces'
 import { computed, reactive, ref, shallowRef, useTemplateRef } from 'vue'
 import ReportScoreModal from './components/ReportScoreModal.vue'
 import SetupTourney from './components/SetupTourney.vue'
 import TournamentStage from './components/TournamentStage.vue'
 import {
   CustomStandingsTournament,
-  PLAYOFFS_BEST_OF,
-  SWISS_BEST_OF,
   type AdditionalStandingsValues,
+  type TournamentFormat,
 } from './tournament'
 
 useDark({
@@ -33,6 +31,13 @@ const tournament = shallowRef<CustomStandingsTournament | null>(null)
 const tournamentMatches = ref<Match[]>([])
 const teamNames = ref<{ [id: string]: string }>({})
 const swissRoundCount = computed(() => tournament.value?.stageOne.rounds ?? 0)
+
+const tournamentFormat = ref<TournamentFormat>({
+  type: 'swiss',
+  swissBestOf: 3,
+  advancementCutoff: 4,
+  playoffsBestOf: 5,
+})
 
 const mapData = ref<MapData>({
   mapPool: {
@@ -72,19 +77,30 @@ function assignTournament(newTournament: CustomStandingsTournament) {
 const { saveTournament, saveSwissStandings } = storageAvailable('localStorage')
   ? (() => {
       const TOURNAMENT_KEY = 'tournament'
+      const TOURNAMENT_FORMAT_KEY = 'tournament-format'
       const MAP_DATA_KEY = 'map-data'
       const SWISS_STANDINGS_KEY = 'swiss-standings'
       const storedTournament = localStorage.getItem(TOURNAMENT_KEY)
       if (storedTournament) {
-        const tournamentData: LoadableTournamentValues & (MapData | object) =
-          JSON.parse(storedTournament)
         assignTournament(
-          new CustomStandingsTournament(tournamentManager.reloadTournament(tournamentData)),
+          new CustomStandingsTournament(
+            tournamentManager.reloadTournament(JSON.parse(storedTournament)),
+          ),
         )
+
+        const storedTournamentFormat = localStorage.getItem(TOURNAMENT_FORMAT_KEY)
+        if (storedTournamentFormat) {
+          tournamentFormat.value = JSON.parse(storedTournamentFormat)
+        }
 
         const storedMapData = localStorage.getItem(MAP_DATA_KEY)
         if (storedMapData) {
           mapData.value = JSON.parse(storedMapData)
+        } else {
+          mapData.value.rounds = generateRoundsWithFormat(
+            tournamentFormat.value,
+            mapData.value.mapPool,
+          )
         }
 
         const storedSwissStandings = localStorage.getItem(SWISS_STANDINGS_KEY)
@@ -94,26 +110,63 @@ const { saveTournament, saveSwissStandings } = storageAvailable('localStorage')
       }
       return {
         saveTournament: () => {
-          if (tournament.value === null) {
-            localStorage.removeItem(TOURNAMENT_KEY)
-            localStorage.removeItem(MAP_DATA_KEY)
-          } else {
+          if (tournament.value !== null) {
             localStorage.setItem(TOURNAMENT_KEY, JSON.stringify(tournament.value))
+            localStorage.setItem(TOURNAMENT_FORMAT_KEY, JSON.stringify(tournamentFormat.value))
             localStorage.setItem(MAP_DATA_KEY, JSON.stringify(mapData.value))
+          } else {
+            localStorage.removeItem(TOURNAMENT_KEY)
+            localStorage.removeItem(TOURNAMENT_FORMAT_KEY)
+            localStorage.removeItem(MAP_DATA_KEY)
           }
         },
         saveSwissStandings: () => {
-          if (lockedSwissStandings.value === null) {
-            localStorage.removeItem(SWISS_STANDINGS_KEY)
-          } else {
+          if (lockedSwissStandings.value !== null) {
             localStorage.setItem(SWISS_STANDINGS_KEY, JSON.stringify(lockedSwissStandings.value))
+          } else {
+            localStorage.removeItem(SWISS_STANDINGS_KEY)
           }
         },
       }
     })()
   : { saveTournament: () => {}, saveSwissStandings: () => {} }
 
-function createTournament(mapPool: MapPool, teams: string[]) {
+function generateRoundsWithFormat(format: TournamentFormat, mapPool: MapPool) {
+  switch (format.type) {
+    case 'swiss': {
+      const swissRounds = new Array(tournament.value?.stageOne.rounds)
+        .fill(undefined)
+        .map((_, index) => ({
+          name: `Swiss R${index + 1}`,
+          playStyle: 'bestOf' as PlayStyle,
+          games: new Array(format.swissBestOf).fill('counterpick'),
+        }))
+
+      const playoffRounds = new Array(Math.ceil(Math.log2(format.advancementCutoff)))
+        .fill(undefined)
+        .map((_, index) => ({
+          name: `Playoffs R${index + 1}`,
+          playStyle: 'bestOf' as PlayStyle,
+          games: new Array(format.playoffsBestOf).fill('counterpick'),
+        }))
+      if (playoffRounds.length > 1) {
+        playoffRounds[playoffRounds.length - 2]!.name = 'Semifinals'
+      }
+      playoffRounds[playoffRounds.length - 1]!.name = 'Finals'
+
+      return generateRounds(
+        swissRounds.concat(playoffRounds),
+        mapPool,
+        'Replace All',
+        Object.keys(mapPool).filter((m) => mapPool[m as keyof MapPool].length) as Mode[],
+        [],
+        [],
+      )
+    }
+  }
+}
+
+function createTournament(format: TournamentFormat, mapPool: MapPool, teams: string[]) {
   const newTournament = new CustomStandingsTournament(
     tournamentManager.createTournament('Squid Waukee', {
       players: teams.map((team, index) => {
@@ -123,7 +176,7 @@ function createTournament(mapPool: MapPool, teams: string[]) {
       }),
       sorting: 'none',
       scoring: {
-        bestOf: SWISS_BEST_OF,
+        bestOf: format.swissBestOf,
       },
       stageOne: {
         format: 'swiss',
@@ -131,7 +184,7 @@ function createTournament(mapPool: MapPool, teams: string[]) {
       stageTwo: {
         format: 'single-elimination',
         advance: {
-          value: 4,
+          value: format.advancementCutoff,
           method: 'rank',
         },
       },
@@ -140,34 +193,10 @@ function createTournament(mapPool: MapPool, teams: string[]) {
   newTournament.start()
 
   assignTournament(newTournament)
+  tournamentFormat.value = format
   mapData.value = {
     mapPool,
-    rounds: generateRounds(
-      new Array(newTournament.stageOne.rounds)
-        .fill(undefined)
-        .map((_, index) => ({
-          name: `Swiss R${index + 1}`,
-          playStyle: 'bestOf' as PlayStyle,
-          games: new Array(SWISS_BEST_OF).fill('counterpick'),
-        }))
-        .concat([
-          {
-            name: 'Semifinals',
-            playStyle: 'bestOf' as PlayStyle,
-            games: new Array(PLAYOFFS_BEST_OF).fill('counterpick'),
-          },
-          {
-            name: 'Finals',
-            playStyle: 'bestOf' as PlayStyle,
-            games: new Array(PLAYOFFS_BEST_OF).fill('counterpick'),
-          },
-        ]),
-      mapPool,
-      'Replace All',
-      Object.keys(mapPool).filter((m) => mapPool[m as keyof MapPool].length) as Mode[],
-      [],
-      [],
-    ),
+    rounds: generateRoundsWithFormat(format, mapPool),
   }
   saveTournament()
 }
@@ -231,7 +260,7 @@ function nextRound() {
   if (tournament.value?.status == 'stage-two') {
     lockedSwissStandings.value = oldStandings
     saveSwissStandings()
-    tournament.value.scoring.bestOf = PLAYOFFS_BEST_OF
+    tournament.value.scoring.bestOf = tournamentFormat.value.playoffsBestOf
   }
   saveTournament()
 }
@@ -245,6 +274,7 @@ function nextRound() {
 
     <SetupTourney
       v-if="tournament === null"
+      :initial-format="tournamentFormat"
       :initial-map-pool="mapData.mapPool"
       :initial-teams="Object.values(teamNames)"
       @finish="createTournament"
@@ -255,38 +285,40 @@ function nextRound() {
       </button>
 
       <div v-if="tournament" class="stages-align">
-        <TournamentStage
-          title="Swiss"
-          :best-of="SWISS_BEST_OF"
-          :stage-active="tournament.status === 'stage-one'"
-          :stageInfo="{
-            type: 'swiss',
-            roundCount: swissRoundCount,
-            standings: swissStandings,
-          }"
-          :ordered-teams="[]"
-          :team-names="teamNames"
-          :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
-          :highlighted-team="highlightedTeam"
-          @match-clicked="reportScore"
-          @hover="hover"
-          @drop-team="dropTeam"
-          @next-round="nextRound"
-        />
+        <template v-if="tournamentFormat.type === 'swiss'">
+          <TournamentStage
+            title="Swiss"
+            :best-of="tournamentFormat.swissBestOf"
+            :stage-active="tournament.status === 'stage-one'"
+            :stageInfo="{
+              type: 'swiss',
+              roundCount: swissRoundCount,
+              standings: swissStandings,
+            }"
+            :ordered-teams="[]"
+            :team-names="teamNames"
+            :matches="tournamentMatches.filter((m) => m.round <= swissRoundCount)"
+            :highlighted-team="highlightedTeam"
+            @match-clicked="reportScore"
+            @hover="hover"
+            @drop-team="dropTeam"
+            @next-round="nextRound"
+          />
 
-        <TournamentStage
-          v-if="tournament.status === 'stage-two'"
-          title="Playoffs"
-          :best-of="PLAYOFFS_BEST_OF"
-          :stage-active="tournament.status === 'stage-two'"
-          :stageInfo="{ type: 'playoffs' }"
-          :ordered-teams="swissStandings.map((s) => s.player.id)"
-          :team-names="teamNames"
-          :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
-          :highlighted-team="highlightedTeam"
-          @match-clicked="reportScore"
-          @hover="hover"
-        />
+          <TournamentStage
+            v-if="tournament.status === 'stage-two'"
+            title="Playoffs"
+            :best-of="tournamentFormat.playoffsBestOf"
+            :stage-active="tournament.status === 'stage-two'"
+            :stageInfo="{ type: 'playoffs' }"
+            :ordered-teams="swissStandings.map((s) => s.player.id)"
+            :team-names="teamNames"
+            :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
+            :highlighted-team="highlightedTeam"
+            @match-clicked="reportScore"
+            @hover="hover"
+          />
+        </template>
 
         <div v-if="currentRound">
           <h3>{{ currentRound.name }} Map Pool</h3>

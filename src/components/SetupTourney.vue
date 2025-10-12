@@ -6,19 +6,31 @@ import {
   decodeLegacyMapPool,
 } from 'maps.iplabs.ink/src/helpers/AppContext'
 import { modeAbbreviationToWords } from 'maps.iplabs.ink/src/helpers/MapMode'
+import type { TournamentFormat } from '@/tournament'
 
 const props = defineProps<{
+  initialFormat: TournamentFormat
   initialMapPool: MapPool
   initialTeams: string[]
 }>()
 
 const emit = defineEmits<{
-  (e: 'finish', mapPool: MapPool, teams: string[]): void
+  (e: 'finish', format: TournamentFormat, mapPool: MapPool, teams: string[]): void
 }>()
 
 function pluralFormat(n: number, what: string) {
   return `${n} ${n === 1 ? what : what + 's'}`
 }
+
+const tournamentFormat = ref<TournamentFormat>(props.initialFormat)
+// The function has an exhaustive switch statement, so it does return in every case. This lint is bugged.
+// eslint-disable-next-line vue/return-in-computed-property
+const formattedTournamentFormat = computed(() => {
+  switch (tournamentFormat.value.type) {
+    case 'swiss':
+      return `Swiss Bo${tournamentFormat.value.swissBestOf} → Bo${tournamentFormat.value.playoffsBestOf}`
+  }
+})
 
 const mapPool = ref<MapPool>(props.initialMapPool)
 const totalMapModes = computed(() => Object.values(mapPool.value).flatMap((x) => x).length)
@@ -84,7 +96,32 @@ function deleteTeam(index: number) {
 
 <template>
   <div>
-    <details class="narrow-details" open>
+    <details class="narrow-element">
+      <summary>
+        <h3>Tournament format ({{ formattedTournamentFormat }})</h3>
+      </summary>
+      <p>
+        <select class="narrow-element padded-select">
+          <option>Swiss</option>
+        </select>
+      </p>
+      <template v-if="tournamentFormat.type === 'swiss'">
+        <p>
+          Swiss Best Of:
+          <input type="number" v-model="tournamentFormat.swissBestOf" min="1" step="2" />
+        </p>
+        <p>
+          Advancement Cutoff:
+          <input type="number" v-model="tournamentFormat.advancementCutoff" min="2" />
+        </p>
+        <p>
+          Playoffs Best Of:
+          <input type="number" v-model="tournamentFormat.playoffsBestOf" min="1" step="2" />
+        </p>
+      </template>
+    </details>
+
+    <details class="narrow-element" open>
       <summary>
         <h3>Map pool ({{ pluralFormat(totalMapModes, 'map/mode') }})</h3>
       </summary>
@@ -106,7 +143,7 @@ function deleteTeam(index: number) {
       </p>
     </details>
 
-    <details class="narrow-details" open>
+    <details class="narrow-element" open>
       <summary>
         <h3>Teams ({{ pluralFormat(teams.length, 'team') }})</h3>
       </summary>
@@ -148,7 +185,7 @@ function deleteTeam(index: number) {
       <button
         class="wa-success"
         :disabled="teams.length < 2 || !totalMapModes"
-        @click="() => emit('finish', mapPool, teams)"
+        @click="() => emit('finish', tournamentFormat, mapPool, teams)"
       >
         Let's go!
       </button>
@@ -157,9 +194,17 @@ function deleteTeam(index: number) {
 </template>
 
 <style scoped>
-.narrow-details {
+.narrow-element {
   width: fit-content;
   min-width: 30%;
+}
+
+input[type='number'] {
+  max-width: calc(20px + 4em);
+}
+
+.padded-select {
+  padding-right: 38px;
 }
 
 .tooltip-text {
