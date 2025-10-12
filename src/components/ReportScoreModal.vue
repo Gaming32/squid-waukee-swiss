@@ -91,5 +91,6 @@ defineExpose({ open })
 
 input[type='number'] {
   min-width: calc(20px + 4em);
+  max-width: 130px;
 }
 </style>

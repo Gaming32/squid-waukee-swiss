@@ -270,7 +270,7 @@ function nextRound() {
   <div>
     <ReportScoreModal ref="reportScoreModal" />
 
-    <h1 class="low-margin-title">Squid-Waukee</h1>
+    <h1 :class="tournament !== null ? 'low-margin-title' : ''">Squid-Waukee</h1>
 
     <SetupTourney
       v-if="tournament === null"
