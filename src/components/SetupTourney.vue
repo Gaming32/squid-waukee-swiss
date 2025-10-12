@@ -5,7 +5,7 @@ import {
   decodeAppContext as decodeMapsAppContext,
   decodeLegacyMapPool,
 } from 'maps.iplabs.ink/src/helpers/AppContext'
-import { modeAbbreviationToWords } from 'maps.iplabs.ink/src/helpers/MapMode'
+import { modeAbbreviationToWords, maps as allMaps } from 'maps.iplabs.ink/src/helpers/MapMode'
 import type { TournamentFormat } from '@/tournament'
 
 const props = defineProps<{
@@ -34,6 +34,7 @@ const formattedTournamentFormat = computed(() => {
 
 const mapPool = ref<MapPool>(props.initialMapPool)
 const totalMapModes = computed(() => Object.values(mapPool.value).flatMap((x) => x).length)
+const currentMapSelector = ref<string | null>(null)
 function importMapPoolFromUrl() {
   const mapPoolUrlText = prompt(
     'Enter a URL with a map pool from sendou.ink/maps or maps.iplabs.ink.\n' +
@@ -101,24 +102,24 @@ function deleteTeam(index: number) {
       <summary>
         <h3>Tournament format ({{ formattedTournamentFormat }})</h3>
       </summary>
-      <p>
+      <div class="margin-element">
         <select class="narrow-element padded-select">
           <option>Swiss</option>
         </select>
-      </p>
+      </div>
       <template v-if="tournamentFormat.type === 'swiss'">
-        <p>
+        <div class="margin-element">
           Swiss Best Of:
           <input type="number" v-model="tournamentFormat.swissBestOf" min="1" step="2" />
-        </p>
-        <p>
+        </div>
+        <div class="margin-element">
           Advancement Cutoff:
           <input type="number" v-model="tournamentFormat.advancementCutoff" min="2" />
-        </p>
-        <p>
+        </div>
+        <div class="margin-element">
           Playoffs Best Of:
           <input type="number" v-model="tournamentFormat.playoffsBestOf" min="1" step="2" />
-        </p>
+        </div>
       </template>
     </details>
 
@@ -126,16 +127,53 @@ function deleteTeam(index: number) {
       <summary>
         <h3>Map pool ({{ pluralFormat(totalMapModes, 'map/mode') }})</h3>
       </summary>
-      <ul>
-        <li
-          v-for="(maps, mode) in mapPool"
-          :key="mode"
-          :class="maps.length ? 'tooltip-text' : ''"
-          :title="maps.join(', ')"
-        >
-          {{ modeAbbreviationToWords(mode) }}: {{ pluralFormat(maps.length, 'map') }}
-        </li>
-      </ul>
+      <div>
+        <div v-for="(maps, mode) in mapPool" :key="mode">
+          <div
+            class="selectable-mode"
+            @click="
+              () => {
+                if (currentMapSelector === mode) {
+                  currentMapSelector = null
+                } else {
+                  currentMapSelector = mode
+                }
+              }
+            "
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="12"
+              width="8"
+              viewBox="0 0 320 512"
+              :class="currentMapSelector === mode ? 'open-selectable-mode-dropdown' : ''"
+            >
+              <!--! Font Awesome Pro 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2025 Fonticons, Inc. -->
+              <path
+                fill="currentColor"
+                d="M311.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L243.2 256 73.9 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"
+              />
+            </svg>
+            <div class="selectable-mode-text">
+              {{ modeAbbreviationToWords(mode) }}: {{ pluralFormat(maps.length, 'map') }}
+            </div>
+          </div>
+          <div class="map-selector" v-if="currentMapSelector === mode">
+            <div class="margin-element map-selector-controls">
+              <button class="wa-brand wa-size-s" @click="() => (mapPool[mode] = [...allMaps])">
+                Select All</button
+              >&MediumSpace;
+              <button class="wa-brand wa-size-s" @click="() => (mapPool[mode] = [])">
+                Select None
+              </button>
+            </div>
+            <div v-for="map in allMaps" :key="map">
+              <input type="checkbox" :id="mode + map" :value="map" v-model="mapPool[mode]" />
+              <label :for="mode + map" class="map-selector-label">{{ map }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
       <button class="wa-brand block-button" @click="importMapPoolFromUrl">
         Import from map pool URL
       </button>
@@ -208,10 +246,40 @@ input[type='number'] {
   padding-right: 38px;
 }
 
-.tooltip-text {
+.margin-element {
+  margin-block: 10px;
+}
+
+.selectable-mode {
+  cursor: pointer;
+  width: fit-content;
+}
+
+.open-selectable-mode-dropdown {
+  rotate: 90deg;
+}
+
+.selectable-mode-text {
+  padding-left: 0.5em;
+  display: inline;
   text-decoration: underline;
   text-decoration-style: dotted;
   text-underline-offset: 0.2em;
+}
+
+.map-selector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.map-selector-controls {
+  grid-column-start: 1;
+  grid-column-end: 3;
+}
+
+.map-selector-label {
+  position: relative;
+  bottom: 0.3em;
 }
 
 .block-button {
