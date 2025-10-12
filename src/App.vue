@@ -254,9 +254,8 @@ function nextRound() {
         Reset and edit teams
       </button>
 
-      <div v-if="tournament">
+      <div v-if="tournament" class="stages-align">
         <TournamentStage
-          class="stages-align"
           title="Swiss"
           :best-of="SWISS_BEST_OF"
           :stage-active="tournament.status === 'stage-one'"
@@ -277,7 +276,6 @@ function nextRound() {
 
         <TournamentStage
           v-if="tournament.status === 'stage-two'"
-          class="stages-align"
           title="Playoffs"
           :best-of="PLAYOFFS_BEST_OF"
           :stage-active="tournament.status === 'stage-two'"
@@ -290,7 +288,7 @@ function nextRound() {
           @hover="hover"
         />
 
-        <div v-if="currentRound" class="stages-align">
+        <div v-if="currentRound">
           <h3>{{ currentRound.name }} Map Pool</h3>
           <ul>
             <li v-for="mapMode in currentRoundMapList" :key="mapMode">
@@ -313,6 +311,7 @@ function nextRound() {
 }
 
 .stages-align {
-  float: left;
+  display: flex;
+  flex-wrap: wrap;
 }
 </style>
