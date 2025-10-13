@@ -16,6 +16,10 @@ body {
   button {
     display: none;
   }
+
+  .print-hide {
+    display: none;
+  }
 }
 
 button:disabled {
@@ -30,4 +34,12 @@ button:disabled {
 .icon-button:hover {
   text-decoration: underline;
   font-weight: bold;
+}
+
+.right-aligned {
+  text-align: right;
+}
+
+.hovered-row {
+  background-color: var(--wa-color-fill-quiet);
 }

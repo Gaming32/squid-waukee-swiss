@@ -146,7 +146,7 @@ function deleteTeam(index: number) {
               height="12"
               width="8"
               viewBox="0 0 320 512"
-              :class="currentMapSelector === mode ? 'open-selectable-mode-dropdown' : ''"
+              :class="{ 'open-selectable-mode-dropdown': currentMapSelector === mode }"
             >
               <!--! Font Awesome Pro 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2025 Fonticons, Inc. -->
               <path
@@ -159,10 +159,10 @@ function deleteTeam(index: number) {
             </div>
           </div>
           <div class="map-selector" v-if="currentMapSelector === mode">
-            <div class="margin-element map-selector-controls">
+            <div class="margin-element gapped-controls map-selector-controls">
               <button class="wa-brand wa-size-s" @click="() => (mapPool[mode] = [...allMaps])">
-                Select All</button
-              >&MediumSpace;
+                Select All
+              </button>
               <button class="wa-brand wa-size-s" @click="() => (mapPool[mode] = [])">
                 Select None
               </button>
@@ -187,14 +187,14 @@ function deleteTeam(index: number) {
         <h3>Teams ({{ pluralFormat(teams.length, 'team') }})</h3>
       </summary>
       <div>Enter team name:</div>
-      <p>
+      <p class="gapped-controls">
         <input
           class="small-input"
           ref="teamNameInput"
           v-model="newTeamName"
           placeholder="Team name"
           @keyup.enter="addNewTeam"
-        />&MediumSpace;
+        />
         <button class="wa-brand" :disabled="!newTeamName.length" @click="addNewTeam">
           Add team
         </button>
@@ -270,6 +270,11 @@ input[type='number'] {
 .map-selector {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+}
+
+.gapped-controls {
+  display: flex;
+  gap: 0.5em;
 }
 
 .map-selector-controls {

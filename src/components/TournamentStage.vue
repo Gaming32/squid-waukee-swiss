@@ -124,21 +124,15 @@ const hasDrops = computed(
     />
 
     <template v-if="stageInfo.type === 'swiss'">
-      <p>
-        <button
-          v-if="stageActive && !finalSwissRound && !anyMatchesActive"
-          class="wa-brand"
-          @click="() => emit('nextRound')"
-        >
-          Next round!
-        </button>
+      <p v-if="stageActive && !finalSwissRound && !anyMatchesActive">
+        <button class="wa-brand" @click="() => emit('nextRound')">Next round!</button>
       </p>
 
       <div class="swiss-table">
         <table class="swiss-table wa-hover-rows wa-zebra-rows">
           <thead>
             <tr>
-              <th>Rank</th>
+              <th class="right-aligned">Rank</th>
               <th>Team</th>
               <th>W/L</th>
               <th>TB</th>
@@ -152,13 +146,13 @@ const hasDrops = computed(
             <tr
               v-for="(team, rank) in stageInfo.standings"
               :key="team.player.id"
-              :class="team.player.id === highlightedTeam ? 'hovered-row' : ''"
-              @mouseenter="emit('hover', team.player.id)"
-              @mouseleave="emit('hover')"
-              @touchstart="emit('hover', team.player.id)"
-              @touchend="emit('hover')"
+              :class="{ 'hovered-row': team.player.id === highlightedTeam }"
+              @mouseenter="() => emit('hover', team.player.id)"
+              @mouseleave="() => emit('hover')"
+              @touchstart="() => emit('hover', team.player.id)"
+              @touchend="() => emit('hover')"
             >
-              <td class="right-aligned-number">{{ rank + 1 }}.</td>
+              <td class="right-aligned">{{ rank + 1 }}.</td>
               <td>{{ team.player.name }}</td>
               <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
               <td>{{ -team.lossesAgainstTiedScore }}</td>
@@ -175,23 +169,21 @@ const hasDrops = computed(
         </table>
       </div>
 
-      <p>
-        <button
-          v-if="stageActive && finalSwissRound && !anyMatchesActive"
-          class="wa-success"
-          @click="() => emit('nextRound')"
-        >
-          Onto playoffs!
-        </button>
+      <p v-if="stageActive && finalSwissRound && !anyMatchesActive">
+        <button class="wa-success" @click="() => emit('nextRound')">Onto playoffs!</button>
       </p>
     </template>
+    <!-- <template v-else-if="stageInfo.type === 'playoffs'">
+      <p v-if="stageActive && !anyMatchesActive">
+        <button class="wa-success" @click="() => emit('nextRound')">Finalize tournament!</button>
+      </p>
+    </template> -->
   </div>
 </template>
 
 <style scoped>
 .stage-root {
   max-width: 100%;
-  margin-right: 30px;
 }
 
 .low-margin-title {
@@ -201,13 +193,5 @@ const hasDrops = computed(
 .swiss-table {
   overflow-x: auto;
   margin-bottom: 1em;
-}
-
-.hovered-row {
-  background-color: var(--wa-color-fill-quiet);
-}
-
-.right-aligned-number {
-  text-align: right;
 }
 </style>
