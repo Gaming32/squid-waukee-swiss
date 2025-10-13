@@ -41,7 +41,7 @@ const emit = defineEmits<{
             @touchend="() => emit('hover')"
           >
             <td class="right-aligned">
-              {{ teamIndex === 0 ? `${PLACEMENT_EMOJIS[rank - 1] ?? ''} ${rank}.` : '' }}
+              {{ teamIndex === 0 ? `${PLACEMENT_EMOJIS[rank - 1] ?? ''}&nbsp;${rank}.` : '' }}
             </td>
             <td>{{ team.name }}</td>
             <td class="matches-list-column">
@@ -66,6 +66,10 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
+.final-standings-area {
+  overflow-x: auto;
+}
+
 @media print {
   .final-standings-area {
     break-before: page;

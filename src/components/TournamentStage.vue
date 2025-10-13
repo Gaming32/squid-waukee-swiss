@@ -129,7 +129,7 @@ const hasDrops = computed(
       </p>
 
       <div class="swiss-table">
-        <table class="swiss-table wa-hover-rows wa-zebra-rows">
+        <table class="wa-hover-rows wa-zebra-rows">
           <thead>
             <tr>
               <th class="right-aligned">Rank</th>
