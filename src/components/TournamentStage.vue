@@ -17,20 +17,19 @@ export type StageInfo =
     }
 
 const props = defineProps<{
-  title: string
-  bestOf: number
-  stageActive: boolean
+  title?: string
+  stageActive?: boolean
   stageInfo: StageInfo
 
   orderedTeams: string[]
   teamNames: { [id: string]: string }
-  matches: Match[]
+  matches: Match[] // TODO: Store bestOf in match meta
 
   highlightedTeam?: string
 }>()
 
 const emit = defineEmits<{
-  (e: 'matchClicked', matchId: string, bestOf: number): void
+  (e: 'matchClicked', matchId: string): void
   (e: 'hover', team?: string): void
   (e: 'dropTeam', teamId: string): void
   (e: 'nextRound'): void
@@ -73,7 +72,7 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
       group_id: 0,
       round_id: match.round,
       number: match.match,
-      child_count: props.bestOf,
+      child_count: match.meta.bestOf,
       status,
       opponent1: getOpponent(match.player1),
       opponent2: getOpponent(match.player2),
@@ -113,13 +112,13 @@ const hasDrops = computed(
 
 <template>
   <div class="stage-root">
-    <h2 class="low-margin-title">{{ title }}</h2>
+    <h2 v-if="title" class="low-margin-title">{{ title }}</h2>
 
     <BracketRenderer
       v-if="bracketRendererMatches.length"
       :brackets="bracketRendererBrackets"
       :highlight-team="highlightedTeam"
-      @match-clicked="(matchId) => emit('matchClicked', matchId.toString(), props.bestOf)"
+      @match-clicked="(matchId) => emit('matchClicked', matchId.toString())"
       @hover="(team) => emit('hover', team)"
     />
 
@@ -173,11 +172,6 @@ const hasDrops = computed(
         <button class="wa-success" @click="() => emit('nextRound')">Onto playoffs!</button>
       </p>
     </template>
-    <!-- <template v-else-if="stageInfo.type === 'playoffs'">
-      <p v-if="stageActive && !anyMatchesActive">
-        <button class="wa-success" @click="() => emit('nextRound')">Finalize tournament!</button>
-      </p>
-    </template> -->
   </div>
 </template>
 

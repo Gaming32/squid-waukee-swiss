@@ -6,7 +6,11 @@ import {
   decodeLegacyMapPool,
 } from 'maps.iplabs.ink/src/helpers/AppContext'
 import { modeAbbreviationToWords, maps as allMaps } from 'maps.iplabs.ink/src/helpers/MapMode'
-import type { TournamentFormat } from '@/tournament'
+import {
+  DEFAULT_SINGLE_ELIMINATION_SETTINGS,
+  DEFAULT_SWISS_SETTINGS,
+  type TournamentFormat,
+} from '@/format'
 
 const props = defineProps<{
   initialFormat: TournamentFormat
@@ -22,13 +26,33 @@ function pluralFormat(n: number, what: string) {
   return `${n} ${n === 1 ? what : what + 's'}`
 }
 
-const tournamentFormat = ref<TournamentFormat>(props.initialFormat)
-// The function has an exhaustive switch statement, so it does return in every case. This lint is bugged.
-// eslint-disable-next-line vue/return-in-computed-property
-const formattedTournamentFormat = computed(() => {
-  switch (tournamentFormat.value.type) {
+const swissSettings = ref(DEFAULT_SWISS_SETTINGS)
+const singleEliminationSettings = ref(DEFAULT_SINGLE_ELIMINATION_SETTINGS)
+const tournamentFormatType = ref(props.initialFormat.type)
+switch (props.initialFormat.type) {
+  case 'swiss':
+    swissSettings.value = props.initialFormat
+    break
+  case 'single_elimination':
+    singleEliminationSettings.value = props.initialFormat
+    break
+}
+
+const tournamentFormat = computed<TournamentFormat>(() => {
+  switch (tournamentFormatType.value) {
     case 'swiss':
-      return `Swiss Bo${tournamentFormat.value.swissBestOf} → Bo${tournamentFormat.value.playoffsBestOf}`
+      return { type: 'swiss', ...swissSettings.value }
+    case 'single_elimination':
+      return { type: 'single_elimination', ...singleEliminationSettings.value }
+  }
+})
+const formattedTournamentFormat = computed(() => {
+  const format = tournamentFormat.value
+  switch (format.type) {
+    case 'swiss':
+      return `Swiss Bo${format.swissBestOf} → Top ${format.advancementCutoff}, Bo${format.playoffsBestOf}`
+    case 'single_elimination':
+      return `Single Elim Bo${format.bestOf} → Bo${format.finalsBestOf}`
   }
 })
 
@@ -100,25 +124,36 @@ function deleteTeam(index: number) {
   <div>
     <details class="narrow-element">
       <summary>
-        <h3>Tournament format ({{ formattedTournamentFormat }})</h3>
+        <h3>Format ({{ formattedTournamentFormat }})</h3>
       </summary>
       <div class="margin-element">
-        <select class="narrow-element padded-select">
-          <option>Swiss</option>
+        <select class="narrow-element padded-select" v-model="tournamentFormatType">
+          <option value="swiss">Swiss</option>
+          <option value="single_elimination">Single Elimination</option>
         </select>
       </div>
-      <template v-if="tournamentFormat.type === 'swiss'">
+      <template v-if="tournamentFormatType === 'swiss'">
         <div class="margin-element">
           Swiss Best Of:
-          <input type="number" v-model="tournamentFormat.swissBestOf" min="1" step="2" />
+          <input type="number" v-model="swissSettings.swissBestOf" min="1" step="2" />
         </div>
         <div class="margin-element">
           Advancement Cutoff:
-          <input type="number" v-model="tournamentFormat.advancementCutoff" min="2" />
+          <input type="number" v-model="swissSettings.advancementCutoff" min="2" />
         </div>
         <div class="margin-element">
           Playoffs Best Of:
-          <input type="number" v-model="tournamentFormat.playoffsBestOf" min="1" step="2" />
+          <input type="number" v-model="swissSettings.playoffsBestOf" min="1" step="2" />
+        </div>
+      </template>
+      <template v-else-if="tournamentFormatType === 'single_elimination'">
+        <div class="margin-element">
+          Best Of:
+          <input type="number" v-model="singleEliminationSettings.bestOf" min="1" step="2" />
+        </div>
+        <div class="margin-element">
+          Finals Best Of:
+          <input type="number" v-model="singleEliminationSettings.finalsBestOf" min="1" step="2" />
         </div>
       </template>
     </details>

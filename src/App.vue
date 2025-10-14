@@ -3,7 +3,6 @@ import { useDark } from '@vueuse/core'
 import { generateRounds } from 'maps.iplabs.ink/src/helpers/MapGeneration'
 import { maps as allMaps } from 'maps.iplabs.ink/src/helpers/MapMode'
 import type {
-  Round,
   AppContext as MapData,
   MapPool,
 } from 'maps.iplabs.ink/src/types-interfaces/Interfaces'
@@ -14,15 +13,17 @@ import { computed, reactive, ref, shallowRef, useTemplateRef } from 'vue'
 import ReportScoreModal from './components/ReportScoreModal.vue'
 import SetupTourney from './components/SetupTourney.vue'
 import TournamentStage from './components/TournamentStage.vue'
-import {
-  compareStandingsValues,
-  CustomStandingsTournament,
-  type AdditionalStandingsValues,
-  type TournamentFormat,
-} from './tournament'
-import { appendOrAdd, filledArray } from './utils'
+import { CustomStandingsTournament, type AdditionalStandingsValues } from './tournament'
+import { appendOrAdd } from './utils'
 import { groupBy } from 'lodash'
 import FinalStandings from './components/FinalStandings.vue'
+import {
+  computeFinalStandings,
+  createInitialTournamentOrganizerFormatSettings,
+  createRounds,
+  DEFAULT_TOURNAMENT_FORMAT,
+  type TournamentFormat,
+} from './format'
 
 useDark({
   valueDark: 'wa-dark',
@@ -37,12 +38,7 @@ const tournamentMatches = ref<Match[]>([])
 const teamNames = ref<{ [id: string]: string }>({})
 const swissRoundCount = computed(() => tournament.value?.stageOne.rounds ?? 0)
 
-const tournamentFormat = ref<TournamentFormat>({
-  type: 'swiss',
-  swissBestOf: 3,
-  advancementCutoff: 4,
-  playoffsBestOf: 5,
-})
+const tournamentFormat = ref(DEFAULT_TOURNAMENT_FORMAT)
 
 const mapData = ref<MapData>({
   mapPool: {
@@ -54,11 +50,25 @@ const mapData = ref<MapData>({
   },
   rounds: [],
 })
+const currentRoundNumber = computed(() => {
+  const roundsNotReady = Object.entries(groupBy(tournamentMatches.value, 'round'))
+    .filter(([, ms]) => ms.some((m) => !m.bye && (m.player1.id === null || m.player2.id === null)))
+    .map(([r]) => Number.parseInt(r))
+  if (roundsNotReady.length) {
+    return Math.min(...roundsNotReady) - 1
+  }
+  const finalRound = tournamentMatches.value[tournamentMatches.value.length - 1]
+  if (finalRound && !finalRound.player1.win && !finalRound.player2.win) {
+    return finalRound.round
+  }
+  return null
+})
 const currentRound = computed(() => {
-  const firstIncompleteRound = Math.min(
-    ...tournamentMatches.value.filter((m) => m.active).map((m) => m.round),
-  )
-  return mapData.value.rounds[firstIncompleteRound - 1]
+  const roundNumber = currentRoundNumber.value
+  if (roundNumber === null) {
+    return null
+  }
+  return mapData.value.rounds[roundNumber - 1]
 })
 const currentRoundMapList = computed(() =>
   currentRound.value?.games.map((mapMode) =>
@@ -72,53 +82,10 @@ const swissStandings = computed(
 )
 
 const finalStandings = computed(() => {
-  if (
-    !tournamentMatches.value.length ||
-    tournament.value === null ||
-    tournament.value?.status === 'stage-one'
-  ) {
+  if (!tournamentMatches.value.length || tournament.value === null) {
     return {}
   }
-  const topCutCount = tournament.value.stageTwo.advance.value
-  const standings: { [standing: number]: Player[] } = {}
-
-  const lastSwissRound = tournament.value.stageOne.rounds
-  const maxRound = Math.max(...tournamentMatches.value.map((m) => m.round))
-  const matches = groupBy(tournamentMatches.value, 'round')
-
-  const overallWinner = tournament.value.winnerLoserOf(matches[maxRound]?.[0])?.[0]
-  if (overallWinner) {
-    standings[1] = [overallWinner]
-  }
-
-  let currentRound = maxRound
-  let standing = 2
-  while (currentRound > lastSwissRound) {
-    const matchesInRound = matches[currentRound]!
-    const losersInRound = matchesInRound
-      .map((m) => tournament.value!.winnerLoserOf(m)?.[1])
-      .filter((x) => x !== undefined)
-    if (losersInRound.length) {
-      standings[standing] = losersInRound
-    }
-    standing += standing - 1 - matchesInRound.filter((m) => m.bye).length
-    currentRound--
-  }
-
-  standing = topCutCount
-  let previousStandingValues = null
-  for (const standingValues of swissStandings.value.slice(topCutCount)) {
-    if (
-      previousStandingValues === null ||
-      compareStandingsValues(previousStandingValues, standingValues) > 0
-    ) {
-      standing++
-    }
-    appendOrAdd(standings, standing, standingValues.player)
-    previousStandingValues = standingValues
-  }
-
-  return standings
+  return computeFinalStandings(tournamentFormat.value.type, tournament.value, swissStandings.value)
 })
 const completedMatchesPerTeam = computed(() => {
   if (!tournament.value) {
@@ -171,6 +138,7 @@ const { saveTournament, saveSwissStandings } = storageAvailable('localStorage')
           mapData.value = JSON.parse(storedMapData)
         } else {
           mapData.value.rounds = generateRoundsWithFormat(
+            tournament.value!.players.length,
             tournamentFormat.value,
             mapData.value.mapPool,
           )
@@ -204,81 +172,54 @@ const { saveTournament, saveSwissStandings } = storageAvailable('localStorage')
     })()
   : { saveTournament: () => {}, saveSwissStandings: () => {} }
 
-function generateRoundsWithFormat(format: TournamentFormat, mapPool: MapPool) {
-  switch (format.type) {
-    case 'swiss': {
-      if (tournament.value === null) {
-        return []
-      }
-
-      const swissRounds = filledArray(tournament.value.stageOne.rounds).map<Round>((_, index) => ({
-        name: `Swiss R${index + 1}`,
-        playStyle: 'bestOf',
-        games: filledArray(format.swissBestOf, 'counterpick'),
-      }))
-
-      const playoffRounds = filledArray(
-        Math.ceil(Math.log2(tournamentFormat.value.advancementCutoff)),
-      ).map<Round>((_, index) => ({
-        name: `Playoffs R${index + 1}`,
-        playStyle: 'bestOf',
-        games: filledArray(format.swissBestOf, 'counterpick'),
-      }))
-      if (playoffRounds.length > 1) {
-        playoffRounds[playoffRounds.length - 2]!.name = 'Semifinals'
-      }
-      playoffRounds[playoffRounds.length - 1]!.name = 'Finals'
-
-      return generateRounds(
-        swissRounds.concat(playoffRounds),
-        mapPool,
-        'Replace All',
-        Object.keys(mapPool).filter((m) => mapPool[m as keyof MapPool].length) as Mode[],
-        [],
-        [],
-      )
-    }
-  }
+function generateRoundsWithFormat(players: number, format: TournamentFormat, mapPool: MapPool) {
+  return generateRounds(
+    createRounds(players, format),
+    mapPool,
+    'Replace All',
+    Object.keys(mapPool).filter((m) => mapPool[m as keyof MapPool].length) as Mode[],
+    [],
+    [],
+  )
 }
 
 function createTournament(format: TournamentFormat, mapPool: MapPool, teams: string[]) {
   const newTournament = new CustomStandingsTournament(
-    tournamentManager.createTournament('Squid Waukee', {
+    tournamentManager.createTournament('Squid-Waukee', {
       players: teams.map((team, index) => {
         const player = new Player(index.toString(), team)
         player.meta.dropped = false
         return player
       }),
       sorting: 'none',
-      scoring: {
-        bestOf: format.swissBestOf,
-      },
-      stageOne: {
-        format: 'swiss',
-      },
-      stageTwo: {
-        format: 'single-elimination',
-        advance: {
-          value: format.advancementCutoff,
-          method: 'rank',
-        },
-      },
+      ...createInitialTournamentOrganizerFormatSettings(format),
     }),
   )
   newTournament.start()
+
+  for (const match of newTournament.matches) {
+    match.meta.bestOf = newTournament.scoring.bestOf
+  }
+  if (format.type === 'single_elimination') {
+    for (const match of newTournament.matches) {
+      if (match.round >= newTournament.stageOne.rounds - 1) {
+        match.meta.bestOf = format.finalsBestOf
+      }
+    }
+  }
 
   assignTournament(newTournament)
   tournamentFormat.value = format
   mapData.value = {
     mapPool,
-    rounds: generateRoundsWithFormat(format, mapPool),
+    rounds: generateRoundsWithFormat(teams.length, format, mapPool),
   }
   saveTournament()
 }
 
 function resetAndEdit() {
   if (
-    (tournament.value?.matches.every((m) => m.active) && tournament.value?.round === 1) ||
+    tournament.value?.matches.every((m) => !m.player1.win && !m.player2.win) ||
     confirm(
       'This will clear all tournament progress and return to the tournament creation screen. Are you sure?',
     )
@@ -291,14 +232,18 @@ function resetAndEdit() {
   }
 }
 
-function reportScore(matchId: string, bestOf: number) {
-  const match = tournament.value?.matches.find((m) => m.id == matchId)
+function reportScore(matchId: string) {
+  const match = tournament.value?.matches.find((m) => m.id === matchId)
   if (!match || !match.player1.id || !match.player2.id || !match.active) {
     return
   }
+  if (currentRoundNumber.value !== null && match.round > currentRoundNumber.value) {
+    return
+  }
 
-  const team1 = tournament.value!.players.find((p) => p.id == match.player1.id)!
-  const team2 = tournament.value!.players.find((p) => p.id == match.player2.id)!
+  const bestOf = match.meta.bestOf
+  const team1 = tournament.value!.players.find((p) => p.id === match.player1.id)!
+  const team2 = tournament.value!.players.find((p) => p.id === match.player2.id)!
 
   reportScoreModal.value?.open(
     {
@@ -310,7 +255,19 @@ function reportScore(matchId: string, bestOf: number) {
     bestOf,
     (scores) => {
       if (!scores) return
-      tournament.value!.enterResult(matchId, scores.score1, scores.score2)
+
+      const tourney = tournament.value!
+      const oldBestOf = tourney.scoring.bestOf
+      tourney.scoring.bestOf = bestOf
+      tourney.enterResult(matchId, scores.score1, scores.score2)
+      tourney.scoring.bestOf = oldBestOf
+
+      const isSingleElim =
+        (tourney.status === 'stage-one' && tourney.stageOne.format === 'single-elimination') ||
+        (tourney.status === 'stage-two' && tourney.stageTwo.format === 'single-elimination')
+      if (isSingleElim) {
+        nextRound()
+      }
       saveTournament()
     },
   )
@@ -321,7 +278,7 @@ function hover(team?: string) {
 }
 
 function dropTeam(teamId: string) {
-  const team = tournament.value?.players.find((p) => p.id == teamId)
+  const team = tournament.value?.players.find((p) => p.id === teamId)
   if (!team) return
   team.meta.dropped = true
   tournament.value?.removePlayer(teamId)
@@ -329,20 +286,29 @@ function dropTeam(teamId: string) {
 }
 
 function nextRound() {
-  const oldStandings = swissStandings.value
-  tournament.value!.next()
-  tournamentMatches.value = tournament.value!.matches = reactive(tournament.value!.matches)
-  if (tournament.value?.status == 'stage-two') {
-    lockedSwissStandings.value = oldStandings
-    saveSwissStandings()
-    tournament.value.scoring.bestOf = tournamentFormat.value.playoffsBestOf
+  const tourney = tournament.value!
+  if (tournamentFormat.value.type === 'swiss' && tourney.status === 'stage-one') {
+    const oldStandings = swissStandings.value
+    tourney.next()
+    tournamentMatches.value = tourney.matches = reactive(tourney.matches)
+    let bestOf = tournamentFormat.value.swissBestOf
+    //@ts-expect-error next() may have changed this value
+    if (tourney.status === 'stage-two') {
+      bestOf = tournamentFormat.value.playoffsBestOf
+      lockedSwissStandings.value = oldStandings
+      saveSwissStandings()
+    }
+    for (const match of tournamentMatches.value) {
+      if (match.round >= tourney.round) {
+        match.meta.bestOf = bestOf
+      }
+    }
+    saveTournament()
   }
-  saveTournament()
-}
-
-function finalizeTournament() {
-  tournament.value!.end()
-  saveTournament()
+  if (!currentRoundNumber.value) {
+    tourney.end()
+    saveTournament()
+  }
 }
 </script>
 
@@ -368,7 +334,6 @@ function finalizeTournament() {
         <template v-if="tournamentFormat.type === 'swiss'">
           <TournamentStage
             title="Swiss"
-            :best-of="tournamentFormat.swissBestOf"
             :stage-active="tournament.status === 'stage-one'"
             :stageInfo="{
               type: 'swiss',
@@ -388,8 +353,6 @@ function finalizeTournament() {
           <TournamentStage
             v-if="tournament.status === 'stage-two'"
             title="Playoffs"
-            :best-of="tournamentFormat.playoffsBestOf"
-            :stage-active="tournament.status === 'stage-two'"
             :stageInfo="{ type: 'playoffs' }"
             :ordered-teams="swissStandings.map((s) => s.player.id)"
             :team-names="teamNames"
@@ -397,7 +360,17 @@ function finalizeTournament() {
             :highlighted-team="highlightedTeam"
             @match-clicked="reportScore"
             @hover="hover"
-            @next-round="finalizeTournament"
+          />
+        </template>
+        <template v-else-if="tournamentFormat.type === 'single_elimination'">
+          <TournamentStage
+            :stageInfo="{ type: 'playoffs' /* TODO: rename */ }"
+            :ordered-teams="[]"
+            :team-names="teamNames"
+            :matches="tournamentMatches"
+            :highlighted-team="highlightedTeam"
+            @match-clicked="reportScore"
+            @hover="hover"
           />
         </template>
 
@@ -412,6 +385,7 @@ function finalizeTournament() {
         <FinalStandings
           :final-standings="finalStandings"
           :completed-matches-per-team="completedMatchesPerTeam"
+          :stage-round-cutoff="tournament.stageOne.rounds + 1"
           :highlighted-team="highlightedTeam"
           @hover="hover"
         />

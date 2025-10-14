@@ -3,13 +3,6 @@ import type { StandingsValues } from 'tournament-organizer/interfaces'
 
 export const PLACEMENT_EMOJIS = ['🥇', '🥈', '🥉']
 
-export type TournamentFormat = {
-  type: 'swiss'
-  swissBestOf: number
-  advancementCutoff: number
-  playoffsBestOf: number
-}
-
 export interface AdditionalStandingsValues extends StandingsValues {
   lossesAgainstTiedScore: number
 }
@@ -30,7 +23,7 @@ export function compareStandingsValues(a: AdditionalStandingsValues, b: Addition
     return a.lossesAgainstTiedScore - b.lossesAgainstTiedScore
   }
 
-  if (a.tiebreaks.oppMatchWinPct != b.tiebreaks.oppMatchWinPct) {
+  if (a.tiebreaks.oppMatchWinPct !== b.tiebreaks.oppMatchWinPct) {
     return b.tiebreaks.oppMatchWinPct - a.tiebreaks.oppMatchWinPct
   }
 

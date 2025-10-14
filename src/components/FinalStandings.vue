@@ -2,10 +2,12 @@
 import type { Match, Player } from 'tournament-organizer/components'
 import { PLACEMENT_EMOJIS, isPlayerWinning } from '@/tournament'
 import { isEmpty } from 'lodash'
+import { computed } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   finalStandings: { [standing: number]: Player[] }
   completedMatchesPerTeam: { [team: string]: Match[] }
+  stageRoundCutoff?: number
 
   highlightedTeam?: string
 }>()
@@ -13,6 +15,15 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'hover', team?: string): void
 }>()
+
+const stageSections = computed(() =>
+  props.stageRoundCutoff !== undefined
+    ? [
+        (match: Match) => match.round < props.stageRoundCutoff!,
+        (match: Match) => match.round >= props.stageRoundCutoff!,
+      ]
+    : [() => true],
+)
 </script>
 
 <template>
@@ -45,18 +56,26 @@ const emit = defineEmits<{
             </td>
             <td>{{ team.name }}</td>
             <td class="matches-list-column">
-              <div
-                v-for="match in completedMatchesPerTeam[team.id]"
-                :key="match.id"
-                :class="{
-                  match: true,
-                  bye: match.bye,
-                  win: !match.bye && isPlayerWinning(match, team.id),
-                  loss: !match.bye && !isPlayerWinning(match, team.id),
-                }"
-              >
-                {{ match.bye ? 'B' : isPlayerWinning(match, team.id) ? 'W' : 'L' }}
-              </div>
+              <template v-for="(predicate, predicateIndex) in stageSections">
+                <div
+                  v-if="completedMatchesPerTeam[team.id]?.some(predicate)"
+                  :key="predicateIndex"
+                  class="stage"
+                >
+                  <div
+                    v-for="match in completedMatchesPerTeam[team.id]?.filter(predicate)"
+                    :key="match.id"
+                    :class="{
+                      match: true,
+                      bye: match.bye,
+                      win: !match.bye && isPlayerWinning(match, team.id),
+                      loss: !match.bye && !isPlayerWinning(match, team.id),
+                    }"
+                  >
+                    {{ match.bye ? 'B' : isPlayerWinning(match, team.id) ? 'W' : 'L' }}
+                  </div>
+                </div>
+              </template>
             </td>
           </tr>
         </template>
@@ -89,12 +108,20 @@ const emit = defineEmits<{
   display: flex;
   gap: 10px;
 
+  .stage {
+    display: flex;
+    gap: 10px;
+
+    + .stage {
+      border-left: solid gray 2px;
+      padding-left: 10px;
+    }
+  }
+
   .match {
-    border-style: solid;
-    border-width: 2px;
+    border: solid var(--status-color) 2px;
     border-radius: 5px;
     color: var(--status-color);
-    border-color: var(--status-color);
     width: 1lh;
     text-align: center;
   }
