@@ -1,6 +1,6 @@
 import type { Match, ParticipantResult, FinalType, GroupType, Id, MatchGame } from 'brackets-model'
-import type { Connection, Placement, Ranking, RankingItem } from './types'
-import { isMatchGame, rankingHeader } from './helpers'
+import type { Connection, Placement } from './types'
+import { isMatchGame } from './helpers'
 import { t } from './lang'
 
 /**
@@ -210,52 +210,6 @@ export function createResultContainer(): HTMLElement {
   const result = document.createElement('div')
   result.classList.add('result')
   return result
-}
-
-/**
- * Creates a table.
- */
-export function createTable(): HTMLElement {
-  return document.createElement('table')
-}
-
-/**
- * Creates a table row.
- */
-export function createRow(): HTMLElement {
-  return document.createElement('tr')
-}
-
-/**
- * Creates a table cell.
- *
- * @param data The data in the cell.
- */
-export function createCell(data: string | number): HTMLElement {
-  const td = document.createElement('td')
-  td.innerText = String(data)
-  return td
-}
-
-/**
- * Creates the headers for a ranking table.
- *
- * @param ranking The object containing the ranking.
- */
-export function createRankingHeaders(ranking: Ranking): HTMLElement {
-  const headers = document.createElement('tr')
-  const firstItem = ranking[0]
-
-  for (const key in firstItem) {
-    const prop = key as keyof RankingItem
-    const header = rankingHeader(prop)
-    const th = document.createElement('th')
-    th.innerText = header.text
-    th.setAttribute('title', header.tooltip)
-    headers.append(th)
-  }
-
-  return headers
 }
 
 /**

@@ -10,7 +10,6 @@ import type {
 import { Status } from 'brackets-model'
 import {
   splitBy,
-  getRanking,
   getOriginAbbreviation,
   findRoot,
   sortBy,
@@ -25,7 +24,6 @@ import type {
   Config,
   OriginHint,
   ParticipantContainers,
-  RankingItem,
   RoundNameGetter,
   ViewerData,
   ParticipantImage,
@@ -35,7 +33,6 @@ import type {
   MatchWithMetadata,
   InternalViewerData,
   MatchGameWithMetadata,
-  ToggleEvent,
 } from './types'
 
 export class BracketsViewer {
@@ -47,7 +44,6 @@ export class BracketsViewer {
   private stage!: Stage
   private config!: Config
   private skipFirstRound = false
-  private popover!: HTMLElement
 
   private getRoundName(info: RoundNameInfo, fallbackGetter: RoundNameGetter): string {
     return this.config.customRoundName?.(info, lang.t) || fallbackGetter(info, lang.t)
@@ -101,14 +97,6 @@ export class BracketsViewer {
 
     this.participants = data.participants
     data.participants.forEach((participant) => (this.participantRefs[participant.id] = []))
-
-    this.popover = document.createElement('div')
-    this.popover.setAttribute('popover', 'auto')
-    this.popover.addEventListener('toggle', (event) => {
-      if ((event as ToggleEvent).newState === 'closed') this.clearPreviousPopoverSelections()
-    })
-
-    root.append(this.popover)
 
     data.stages.forEach((stage) =>
       this.renderStage(root, {
@@ -561,57 +549,6 @@ export class BracketsViewer {
   }
 
   /**
-   * Creates a ranking table based on matches of a round-robin stage.
-   *
-   * @param matches The list of matches.
-   */
-  private createRanking(matches: Match[]): HTMLElement {
-    const table = dom.createTable()
-    const ranking = getRanking(matches, this.config.rankingFormula)
-
-    table.append(dom.createRankingHeaders(ranking))
-
-    for (const item of ranking) table.append(this.createRankingRow(item))
-
-    return table
-  }
-
-  /**
-   * Creates a row of the ranking table.
-   *
-   * @param item Item of the ranking.
-   */
-  private createRankingRow(item: RankingItem): HTMLElement {
-    const row = dom.createRow()
-    const notRanked = item.played === 0
-
-    for (const key in item) {
-      const prop = key as keyof RankingItem
-      const data = item[prop]
-
-      if (prop === 'id') {
-        const participant = this.participants.find((participant) => participant.id === data)
-
-        if (participant !== undefined) {
-          const cell = dom.createCell(participant.name)
-          this.setupMouseHover(participant.id, cell)
-          row.append(cell)
-          continue
-        }
-      }
-
-      if (notRanked && (prop === 'rank' || prop === 'points')) {
-        row.append(dom.createCell('-'))
-        continue
-      }
-
-      row.append(dom.createCell(data))
-    }
-
-    return row
-  }
-
-  /**
    * Creates a match in a bracket.
    *
    * @param match Information about the match.
@@ -954,12 +891,5 @@ export class BracketsViewer {
       )
 
     refs.push(element)
-  }
-
-  /**
-   * Clears any previous popover selections.
-   */
-  private clearPreviousPopoverSelections(): void {
-    document.querySelector('.opponents.popover-selected')?.classList.remove('popover-selected')
   }
 }
