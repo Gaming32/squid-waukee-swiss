@@ -351,7 +351,7 @@ function nextRound() {
           />
 
           <TournamentStage
-            v-if="tournament.status === 'stage-two'"
+            v-if="tournament.status === 'stage-two' || tournament.status == 'complete'"
             title="Playoffs"
             :stageInfo="{ type: 'playoffs' }"
             :ordered-teams="swissStandings.map((s) => s.player.id)"

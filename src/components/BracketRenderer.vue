@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { MatchWithMetadata, ViewerData } from 'brackets-viewer'
+import type { MatchWithMetadata, ViewerData } from '@/brackets-viewer'
 import { onMounted, ref, useId, watch } from 'vue'
 
 const rendererId = useId()

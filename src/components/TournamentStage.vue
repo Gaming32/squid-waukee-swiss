@@ -4,7 +4,7 @@ import type { Match } from 'tournament-organizer/components'
 import { Status } from 'brackets-model'
 import BracketRenderer from './BracketRenderer.vue'
 import { computed } from 'vue'
-import type { ViewerData } from 'brackets-viewer'
+import type { ViewerData } from '@/brackets-viewer'
 
 export type StageInfo =
   | {
@@ -52,7 +52,7 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
         return null
       }
       const teamIndex =
-        match.round === firstMatch ? props.orderedTeams.findIndex((t) => t == team.id) : -1
+        match.round === firstMatch ? props.orderedTeams.findIndex((t) => t === team.id) : -1
       return {
         id: team.id,
         score: status === Status.Completed ? team.win : undefined,
