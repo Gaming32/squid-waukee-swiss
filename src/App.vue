@@ -37,6 +37,7 @@ const tournament = shallowRef<CustomStandingsTournament | null>(null)
 const tournamentMatches = ref<Match[]>([])
 const teamNames = ref<{ [id: string]: string }>({})
 const swissRoundCount = computed(() => tournament.value?.stageOne.rounds ?? 0)
+const tournamentCompletedChanged = ref(1)
 
 const tournamentFormat = ref(DEFAULT_TOURNAMENT_FORMAT)
 
@@ -58,22 +59,27 @@ const currentRoundNumber = computed(() => {
     return Math.min(...roundsNotReady) - 1
   }
   const finalMatch = findLast(tournamentMatches.value, (m) => !m.bye)
-  if (finalMatch && !finalMatch.player1.win && !finalMatch.player2.win) {
+  if (
+    finalMatch &&
+    tournamentCompletedChanged.value && // This is used as a marker that tournament.status was updated
+    tournament.value!.status !== 'complete'
+  ) {
     return finalMatch.round
   }
   return null
 })
-const currentRound = computed(() => {
+const currentRoundMapData = computed(() => {
   const roundNumber = currentRoundNumber.value
   if (roundNumber === null) {
     return null
   }
   return mapData.value.rounds[roundNumber - 1]
 })
-const currentRoundMapList = computed(() =>
-  currentRound.value?.games.map((mapMode) =>
-    mapMode === 'counterpick' ? 'Counterpick' : `${mapMode.mode.toUpperCase()} ${mapMode.map}`,
-  ),
+const currentRoundMapList = computed(
+  () =>
+    currentRoundMapData.value?.games.map((mapMode) =>
+      mapMode === 'counterpick' ? 'Counterpick' : `${mapMode.mode.toUpperCase()} ${mapMode.map}`,
+    ) ?? null,
 )
 
 const lockedSwissStandings = ref<AdditionalStandingsValues[] | null>(null)
@@ -305,8 +311,9 @@ function nextRound() {
     }
     saveTournament()
   }
-  if (!currentRoundNumber.value) {
+  if (tournamentMatches.value.every((m) => m.bye || m.player1.win || m.player2.win)) {
     tourney.end()
+    tournamentCompletedChanged.value++
     saveTournament()
   }
 }
@@ -374,8 +381,8 @@ function nextRound() {
           />
         </template>
 
-        <div v-if="currentRound" class="print-hide">
-          <h3>{{ currentRound.name }} Map Pool</h3>
+        <div v-if="currentRoundMapData" class="print-hide">
+          <h3>{{ currentRoundMapData.name }} Map Pool</h3>
           <ul>
             <li v-for="mapMode in currentRoundMapList" :key="mapMode">
               {{ mapMode }}
