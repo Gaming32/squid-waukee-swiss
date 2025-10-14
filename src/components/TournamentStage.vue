@@ -80,8 +80,7 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
 })
 const bracketRendererBrackets = computed<ViewerData>(() => {
   return {
-    stages: [
-      {
+    stage: {
         id: 0,
         tournament_id: '',
         name: '',
@@ -89,7 +88,6 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
         settings: {},
         number: 0,
       },
-    ],
     matches: bracketRendererMatches.value,
     matchGames: [],
     participants: bracketRendererParticipants.value,
