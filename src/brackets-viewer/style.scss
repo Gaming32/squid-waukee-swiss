@@ -28,7 +28,7 @@
 }
 
 .brackets-viewer {
-  $connector-width: var(--round-margin) / 2;
+  $connector-width: calc(var(--round-margin) / 2 + 1px);
   $connector-border: var(--connector-border-width) solid var(--connector-color);
 
   $match-border: var(--match-border-width) solid var(--border-color);
@@ -170,6 +170,22 @@
         &:not(:last-of-type) {
           margin-right: var(--round-margin);
         }
+
+        .bye-match-wrapper {
+          display: grid;
+
+          &.tall-wrapper {
+            grid-template-rows: 0.5fr 1fr 0.5fr;
+
+            .match {
+              grid-row: 2;
+            }
+          }
+
+          &.short-wrapper {
+            grid-template-rows: 1fr 1fr;
+          }
+        }
       }
     }
   }
@@ -189,24 +205,24 @@
         position: absolute;
         right: calc(-1 * #{$connector-width});
         width: calc(#{$connector-width});
-        height: 50%;
+        height: calc(50% + 10px);
         border-right: $connector-border;
       }
 
-      &:nth-of-type(odd)::after {
+      &:nth-child(odd of div.match:not(.straight))::after {
         top: 50%;
         border-top: $connector-border;
       }
 
-      &:nth-of-type(even)::after {
-        top: 0;
+      &:nth-child(even of div.match:not(.straight))::after {
+        top: -10px;
         border-bottom: $connector-border;
       }
 
       &.straight::after {
         width: var(--round-margin);
         right: calc(-1 * var(--round-margin));
-        top: 0;
+        top: -10px;
         border-bottom: $connector-border;
         border-top: unset;
         border-right: unset;

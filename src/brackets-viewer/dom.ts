@@ -133,6 +133,18 @@ export function createMatchContainer(match?: Match | MatchGame): HTMLElement {
   return div
 }
 
+export function createByeMatchWrapper(match: HTMLElement, tall: boolean): HTMLElement {
+  const div = document.createElement('div')
+  div.classList.add('bye-match-wrapper')
+  if (tall) {
+    div.classList.add('tall-wrapper')
+  } else {
+    div.classList.add('short-wrapper')
+  }
+  div.append(match)
+  return div
+}
+
 /**
  * Creates a container which contains the label of a match.
  *
@@ -372,10 +384,11 @@ export function addParticipantImage(nameContainer: HTMLElement, src: string): vo
  * @param connectFinal Whether to connect to the final.
  */
 export function getBracketConnection(
-  alwaysConnectFirstRound: boolean,
   roundNumber: number,
   roundCount: number,
-  match: Match,
+  originMatches: number,
+  childOriginMatches: number | null,
+  _match: Match,
   matchLocation?: GroupType,
   connectFinal?: boolean,
 ): Connection {
@@ -389,23 +402,16 @@ export function getBracketConnection(
     connection.connectNext =
       roundNumber < roundCount && (roundNumber % 2 === 0 ? 'square' : 'straight')
   } else {
-    connection.connectPrevious = roundNumber > 1 && 'square'
-    connection.connectNext = roundNumber < roundCount ? 'square' : connectFinal ? 'straight' : false
+    connection.connectPrevious = (originMatches && 'square') || false
+    connection.connectNext =
+      childOriginMatches === 1
+        ? 'straight'
+        : roundNumber < roundCount
+          ? 'square'
+          : connectFinal
+            ? 'straight'
+            : false
   }
-
-  if (alwaysConnectFirstRound || roundNumber !== 2) return connection
-
-  const upperBracket = matchLocation === 'single_bracket' || matchLocation === 'winner_bracket'
-
-  if (
-    upperBracket &&
-    match.opponent1?.position === undefined &&
-    match.opponent2?.position === undefined
-  )
-    connection.connectPrevious = false
-
-  if (matchLocation === 'loser_bracket' && match.opponent2?.position === undefined)
-    connection.connectPrevious = false
 
   return connection
 }

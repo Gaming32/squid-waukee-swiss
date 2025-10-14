@@ -47,7 +47,6 @@ export class BracketsViewer {
   private stage!: Stage
   private config!: Config
   private skipFirstRound = false
-  private alwaysConnectFirstRound = false
   private popover!: HTMLElement
 
   private getRoundName(info: RoundNameInfo, fallbackGetter: RoundNameGetter): string {
@@ -458,7 +457,22 @@ export class BracketsViewer {
     )
     const roundsContainer = dom.createRoundsContainer()
 
-    this.alwaysConnectFirstRound = true
+    const matchOriginCount: { [match: string]: number } = {}
+    const siblings: { [match: string]: string } = {}
+    for (const round of matchesByRound.reverse()) {
+      let previousMatch: string | null = null
+      for (const match of round) {
+        matchOriginCount[match.id] = 0
+        if (match.winDestination) {
+          matchOriginCount[match.winDestination]!++
+        }
+        if (previousMatch) {
+          siblings[previousMatch] = match.id
+        }
+        previousMatch = match.id
+      }
+    }
+    matchesByRound.reverse()
 
     for (let roundIndex = 0; roundIndex < matchesByRound.length; roundIndex++) {
       const roundId = matchesByRound[roundIndex]![0]!.round_id
@@ -484,6 +498,13 @@ export class BracketsViewer {
                 ...match.metadata,
                 roundNumber,
                 roundCount,
+                originMatches: matchOriginCount[match.id]!,
+                childOriginMatches:
+                  match.winDestination !== null ? matchOriginCount[match.winDestination]! : null,
+                childSiblingOriginMatches:
+                  match.winDestination !== null && siblings[match.winDestination] !== undefined
+                    ? matchOriginCount[siblings[match.winDestination]!]!
+                    : null,
                 matchLocation: bracketType,
                 connectFinal,
               },
@@ -610,17 +631,32 @@ export class BracketsViewer {
    * @param match Information about the match.
    */
   private createBracketMatch(match: MatchWithMetadata): HTMLElement {
-    const { roundNumber, roundCount, matchLocation, connectFinal } = match.metadata
-
-    if (roundNumber === undefined || roundCount === undefined || matchLocation === undefined)
-      throw Error(
-        `The match's internal data is missing roundNumber, roundCount or matchLocation: ${JSON.stringify(match)}`,
-      )
-
-    const connection = dom.getBracketConnection(
-      this.alwaysConnectFirstRound,
+    const {
       roundNumber,
       roundCount,
+      originMatches,
+      childOriginMatches,
+      matchLocation,
+      connectFinal,
+    } = match.metadata
+
+    if (
+      roundNumber === undefined ||
+      roundCount === undefined ||
+      originMatches === undefined ||
+      childOriginMatches === undefined ||
+      matchLocation === undefined
+    ) {
+      throw Error(
+        `The match's internal data is missing at least one of several required fields: ${JSON.stringify(match)}`,
+      )
+    }
+
+    const connection = dom.getBracketConnection(
+      roundNumber,
+      roundCount,
+      originMatches,
+      childOriginMatches,
       match,
       matchLocation,
       connectFinal,
@@ -735,6 +771,10 @@ export class BracketsViewer {
       if (!match.metadata.connection) return matchContainer
 
       dom.setupConnection(opponents, matchContainer, match.metadata.connection)
+
+      if (match.metadata.childOriginMatches === 1) {
+        return dom.createByeMatchWrapper(matchContainer, !!match.metadata.childSiblingOriginMatches)
+      }
     }
 
     return matchContainer

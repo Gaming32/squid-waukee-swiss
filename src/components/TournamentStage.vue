@@ -74,6 +74,7 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
       status,
       opponent1: getOpponent(match.player1),
       opponent2: getOpponent(match.player2),
+      winDestination: match.path.win,
     }
   })
 })

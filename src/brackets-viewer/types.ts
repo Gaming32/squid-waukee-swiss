@@ -29,10 +29,15 @@ export interface ToggleEvent extends Event {
   newState: 'open' | 'closed'
 }
 
+export interface MatchWithPath extends Match {
+  id: string
+  winDestination: string | null
+}
+
 /**
  * A match with metadata constructed by the viewer.
  */
-export interface MatchWithMetadata extends Match {
+export interface MatchWithMetadata extends MatchWithPath {
   metadata: {
     // Information known since the beginning
 
@@ -47,6 +52,9 @@ export interface MatchWithMetadata extends Match {
     label?: string
     /** Number of the round this match is in. */
     roundNumber?: number
+    originMatches?: number
+    childOriginMatches?: number | null
+    childSiblingOriginMatches?: number | null
     /** Count of rounds in the group this match is in. */
     roundCount?: number
     /** Group type this match is in. */
@@ -78,7 +86,7 @@ export interface ViewerData {
   stages: Stage[]
 
   /** The matches of the stage to display. */
-  matches: Match[]
+  matches: MatchWithPath[]
 
   /** The games of the matches to display. */
   matchGames: MatchGame[]
