@@ -88,8 +88,6 @@ export class BracketsViewer {
 
     if (config?.onMatchClick) this._onMatchClick = config.onMatchClick
 
-    if (!data.stages?.length) throw Error('The `data.stages` array is either empty or undefined')
-
     if (!data.participants?.length)
       throw Error('The `data.participants` array is either empty or undefined')
 
@@ -98,21 +96,17 @@ export class BracketsViewer {
     this.participants = data.participants
     data.participants.forEach((participant) => (this.participantRefs[participant.id] = []))
 
-    data.stages.forEach((stage) =>
-      this.renderStage(root, {
-        ...data,
-        stages: [stage],
-        matches: data.matches
-          .filter((match) => match.stage_id === stage.id)
-          .map((match) => ({
-            ...match,
-            metadata: {
-              stageType: stage.type,
-              games: data.matchGames.filter((game) => game.parent_id === match.id),
-            },
-          })),
-      }),
-    )
+    this.renderStage(root, {
+      ...data,
+      stages: [data.stage],
+      matches: data.matches.map((match) => ({
+        ...match,
+        metadata: {
+          stageType: data.stage.type,
+          games: data.matchGames.filter((game) => game.parent_id === match.id),
+        },
+      })),
+    })
 
     const target = findRoot(config?.selector)
     if (config?.clear) target.innerHTML = ''
@@ -224,7 +218,7 @@ export class BracketsViewer {
           lang.getRoundName,
         )
 
-        const { roundWrapper, roundContainer } = dom.createRoundContainer(roundId, roundName)
+        const { roundWrapper, roundContainer } = dom.createRoundContainer(roundId, roundName, true)
         for (const match of roundMatches) roundContainer.append(this.createMatch(match))
 
         groupContainer.append(roundWrapper)
@@ -457,7 +451,7 @@ export class BracketsViewer {
         getRoundName,
       )
 
-      const { roundWrapper, roundContainer } = dom.createRoundContainer(roundId, roundName)
+      const { roundWrapper, roundContainer } = dom.createRoundContainer(roundId, roundName, false)
 
       const roundMatches = matchesByRound[roundIndex]!
       for (const match of roundMatches) {
@@ -542,6 +536,7 @@ export class BracketsViewer {
       const { roundWrapper, roundContainer } = dom.createRoundContainer(
         finalMatch.round_id,
         roundName,
+        false,
       )
       roundContainer.append(this.createFinalMatch(finalType, finalMatch))
       upperBracket.append(roundWrapper)

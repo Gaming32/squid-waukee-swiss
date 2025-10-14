@@ -73,7 +73,7 @@ export interface MatchGameWithMetadata extends MatchGame {
  */
 export interface ViewerData {
   /** The stages to display. */
-  stages: Stage[]
+  stage: Stage
 
   /** The matches of the stage to display. */
   matches: MatchWithPath[]

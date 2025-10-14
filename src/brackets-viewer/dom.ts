@@ -80,19 +80,24 @@ export function createRoundsContainer(): HTMLElement {
 export function createRoundContainer(
   roundId: Id,
   title: string,
+  withWrapper: boolean,
 ): { roundWrapper: HTMLElement; roundContainer: HTMLElement } {
   const h3 = document.createElement('h3')
   h3.innerText = title
 
-  const roundWrapper = document.createElement('div')
-  roundWrapper.classList.add('round-wrapper')
-  roundWrapper.append(h3)
-
   const roundContainer = document.createElement('div')
   roundContainer.classList.add('round')
   roundContainer.setAttribute('data-round-id', roundId.toString())
-  roundWrapper.append(roundContainer)
-  return { roundWrapper, roundContainer }
+
+  if (withWrapper) {
+    const roundWrapper = document.createElement('div')
+    roundWrapper.classList.add('round-wrapper')
+    roundWrapper.append(h3, roundContainer)
+    return { roundWrapper, roundContainer }
+  } else {
+    roundContainer.append(h3)
+    return { roundWrapper: roundContainer, roundContainer }
+  }
 }
 
 /**
