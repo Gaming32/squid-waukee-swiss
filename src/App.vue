@@ -15,7 +15,7 @@ import SetupTourney from './components/SetupTourney.vue'
 import TournamentStage from './components/TournamentStage.vue'
 import { CustomStandingsTournament, type AdditionalStandingsValues } from './tournament'
 import { appendOrAdd } from './utils'
-import { groupBy } from 'lodash'
+import { findLast, groupBy } from 'lodash'
 import FinalStandings from './components/FinalStandings.vue'
 import {
   computeFinalStandings,
@@ -57,9 +57,9 @@ const currentRoundNumber = computed(() => {
   if (roundsNotReady.length) {
     return Math.min(...roundsNotReady) - 1
   }
-  const finalRound = tournamentMatches.value[tournamentMatches.value.length - 1]
-  if (finalRound && !finalRound.player1.win && !finalRound.player2.win) {
-    return finalRound.round
+  const finalMatch = findLast(tournamentMatches.value, (m) => !m.bye)
+  if (finalMatch && !finalMatch.player1.win && !finalMatch.player2.win) {
+    return finalMatch.round
   }
   return null
 })

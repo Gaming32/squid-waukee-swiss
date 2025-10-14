@@ -80,16 +80,25 @@ watch(
     display: none;
   }
 
-  .round-robin .round {
-    --grid-columns: calc(clamp(2, round(down, 50vw / var(--match-width)), 4));
+  .round-robin {
+    .group {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-    display: grid;
-    grid-template-columns: repeat(var(--grid-columns), var(--match-width));
-    gap: 10px;
+    .round {
+      --grid-columns: calc(clamp(2, round(down, 50vw / var(--match-width)), 4));
 
-    h3 {
-      grid-column-start: 1;
-      grid-column-end: calc(var(--grid-columns) + 1);
+      display: grid;
+      grid-template-columns: repeat(var(--grid-columns), var(--match-width));
+      gap: 10px;
+
+      h3 {
+        margin-bottom: 0px;
+        grid-column-start: 1;
+        grid-column-end: calc(var(--grid-columns) + 1);
+      }
     }
   }
 }
