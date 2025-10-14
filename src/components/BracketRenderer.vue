@@ -22,6 +22,7 @@ function render(data: ViewerData) {
     showPopoverOnMatchLabelClick: false,
     showRankingTable: false, // Not flexible enough; we do our own
     clear: true,
+    highlightParticipantOnHover: false,
     onMatchClick: clickCallback,
     onMatchLabelClick: clickCallback,
     customRoundName: ({ roundNumber, roundCount }) =>

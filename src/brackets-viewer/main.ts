@@ -13,7 +13,6 @@ import {
   getRanking,
   getOriginAbbreviation,
   findRoot,
-  completeWithBlankMatches,
   sortBy,
   isMatchGame,
   isMatch,
@@ -459,13 +458,7 @@ export class BracketsViewer {
     )
     const roundsContainer = dom.createRoundsContainer()
 
-    const { matches: completedMatches, fromToornament } = completeWithBlankMatches(
-      bracketType,
-      matchesByRound[0]!,
-      matchesByRound[1],
-    )
-
-    this.alwaysConnectFirstRound = !fromToornament
+    this.alwaysConnectFirstRound = true
 
     for (let roundIndex = 0; roundIndex < matchesByRound.length; roundIndex++) {
       const roundId = matchesByRound[roundIndex]![0]!.round_id
@@ -481,8 +474,7 @@ export class BracketsViewer {
 
       const roundContainer = dom.createRoundContainer(roundId, roundName)
 
-      const roundMatches =
-        fromToornament && roundNumber === 1 ? completedMatches : matchesByRound[roundIndex]!
+      const roundMatches = matchesByRound[roundIndex]!
       for (const match of roundMatches) {
         roundContainer.append(
           (match &&
@@ -979,6 +971,14 @@ export class BracketsViewer {
     element: HTMLElement,
     propagateHighlight: boolean,
   ): void {
+    const refs = this.participantRefs[participantId]
+    if (!refs)
+      throw Error(
+        `The participant (id: ${participantId}) does not exist in the participants table.`,
+      )
+
+    refs.push(element)
+
     if (!this.config.highlightParticipantOnHover) return
 
     const setupListeners = (elements: HTMLElement[]): void => {
@@ -995,14 +995,6 @@ export class BracketsViewer {
       setupListeners([element])
       return
     }
-
-    const refs = this.participantRefs[participantId]
-    if (!refs)
-      throw Error(
-        `The participant (id: ${participantId}) does not exist in the participants table.`,
-      )
-
-    refs.push(element)
 
     setupListeners(refs)
   }

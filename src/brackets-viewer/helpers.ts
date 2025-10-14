@@ -1,13 +1,5 @@
 import type { Match, ParticipantResult, GroupType, MatchGame } from 'brackets-model'
-import type {
-  RankingHeader,
-  Ranking,
-  RankingFormula,
-  RankingItem,
-  RankingMap,
-  Side,
-  MatchWithMetadata,
-} from './types'
+import type { RankingHeader, Ranking, RankingFormula, RankingItem, RankingMap, Side } from './types'
 import { t } from './lang'
 
 /**
@@ -101,48 +93,6 @@ export function findRoot(selector?: string): HTMLElement {
     throw Error('The selected root must have a `.brackets-viewer` class.')
 
   return root
-}
-
-/**
- * Completes a list of matches with blank matches based on the next matches.
- *
- * Toornament can generate first rounds with an odd number of matches and the seeding is partially distributed in the second round.
- * This function adds a blank match in the first round as if it was the source match of a seeded match of the second round.
- *
- * @param bracketType Type of the bracket.
- * @param matches The list of first round matches.
- * @param nextMatches The list of second round matches.
- */
-export function completeWithBlankMatches(
-  bracketType: GroupType,
-  matches: MatchWithMetadata[],
-  nextMatches?: MatchWithMetadata[],
-): {
-  matches: (MatchWithMetadata | null)[]
-  fromToornament: boolean
-} {
-  if (!nextMatches) return { matches, fromToornament: false }
-
-  let sources: (number | null)[] = []
-
-  if (bracketType === 'single_bracket' || bracketType === 'winner_bracket')
-    sources = nextMatches
-      .map((match) => [match.opponent1?.position || null, match.opponent2?.position || null])
-      .flat()
-
-  if (bracketType === 'loser_bracket')
-    sources = nextMatches.map((match) => match.opponent2?.position || null)
-
-  // The manager does not set positions where the Toornament layer does.
-  if (sources.filter((source) => source !== null).length === 0)
-    return { matches, fromToornament: false }
-
-  return {
-    matches: sources.map(
-      (source) => (source && matches.find((match) => match.number === source)) || null,
-    ),
-    fromToornament: true,
-  }
 }
 
 /**

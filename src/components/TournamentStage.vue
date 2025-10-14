@@ -45,14 +45,12 @@ const bracketRendererParticipants = computed<ViewerData['participants']>(() =>
   }),
 )
 const bracketRendererMatches = computed<ViewerData['matches']>(() => {
-  const firstMatch = props.matches.map((m) => m.round).sort()[0]
   return props.matches.map((match) => {
     function getOpponent(team: Match['player1']): ViewerData['matches'][0]['opponent1'] {
       if (!team.id) {
         return null
       }
-      const teamIndex =
-        match.round === firstMatch ? props.orderedTeams.findIndex((t) => t === team.id) : -1
+      const teamIndex = props.orderedTeams.findIndex((t) => t === team.id)
       return {
         id: team.id,
         score: status === Status.Completed ? team.win : undefined,
