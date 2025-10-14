@@ -4,28 +4,6 @@ import { isMatchGame, rankingHeader } from './helpers'
 import { t } from './lang'
 
 /**
- * Creates the title of the viewer.
- *
- * @param title The title to set.
- */
-export function createTitle(title: string): HTMLElement {
-  const h1 = document.createElement('h1')
-  h1.innerText = title
-  return h1
-}
-
-/**
- * Creates the title of a popover.
- *
- * @param title The title to set.
- */
-export function createPopoverTitle(title: string): HTMLElement {
-  const h4 = document.createElement('h4')
-  h4.innerText = title
-  return h4
-}
-
-/**
  * Creates a container which contains a round-robin stage.
  *
  * @param stageId ID of the stage.
@@ -56,7 +34,7 @@ export function createEliminationContainer(stageId: Id): HTMLElement {
  * @param title Title of the group.
  */
 export function createBracketContainer(groupId?: Id, title?: string): HTMLElement {
-  const bracket = document.createElement('section')
+  const bracket = document.createElement('div')
   bracket.classList.add('bracket')
 
   // Consolation matches are not in a group.
@@ -77,14 +55,10 @@ export function createBracketContainer(groupId?: Id, title?: string): HTMLElemen
  * @param groupId ID of the group.
  * @param title Title of the group.
  */
-export function createGroupContainer(groupId: Id, title: string): HTMLElement {
-  const h2 = document.createElement('h2')
-  h2.innerText = title
-
-  const group = document.createElement('section')
+export function createGroupContainer(groupId: Id): HTMLElement {
+  const group = document.createElement('div')
   group.classList.add('group')
   group.setAttribute('data-group-id', groupId.toString())
-  group.append(h2)
   return group
 }
 
@@ -103,15 +77,22 @@ export function createRoundsContainer(): HTMLElement {
  * @param roundId ID of the round.
  * @param title Title of the round.
  */
-export function createRoundContainer(roundId: Id, title: string): HTMLElement {
+export function createRoundContainer(
+  roundId: Id,
+  title: string,
+): { roundWrapper: HTMLElement; roundContainer: HTMLElement } {
   const h3 = document.createElement('h3')
   h3.innerText = title
 
-  const round = document.createElement('article')
-  round.classList.add('round')
-  round.setAttribute('data-round-id', roundId.toString())
-  round.append(h3)
-  return round
+  const roundWrapper = document.createElement('div')
+  roundWrapper.classList.add('round-wrapper')
+  roundWrapper.append(h3)
+
+  const roundContainer = document.createElement('div')
+  roundContainer.classList.add('round')
+  roundContainer.setAttribute('data-round-id', roundId.toString())
+  roundWrapper.append(roundContainer)
+  return { roundWrapper, roundContainer }
 }
 
 /**

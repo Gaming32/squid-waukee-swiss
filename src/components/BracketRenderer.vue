@@ -19,12 +19,8 @@ function render(data: ViewerData) {
   const clickCallback = (match: MatchWithMetadata) => emit('matchClicked', match.id)
   window.bracketsViewer.render(data, {
     selector: `#${rendererId}`,
-    showPopoverOnMatchLabelClick: false,
-    showRankingTable: false, // Not flexible enough; we do our own
     clear: true,
-    highlightParticipantOnHover: false,
     onMatchClick: clickCallback,
-    onMatchLabelClick: clickCallback,
     customRoundName: ({ roundNumber, roundCount }) =>
       roundNumber === roundCount
         ? 'Finals'
@@ -70,36 +66,3 @@ watch(
 <template>
   <div class="brackets-viewer" :id="rendererId"></div>
 </template>
-
-<style>
-.brackets-viewer {
-  padding-inline: 20px;
-
-  h1,
-  h2 {
-    display: none;
-  }
-
-  .round-robin {
-    .group {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .round {
-      --grid-columns: calc(clamp(2, round(down, 50vw / var(--match-width)), 4));
-
-      display: grid;
-      grid-template-columns: repeat(var(--grid-columns), var(--match-width));
-      gap: 10px;
-
-      h3 {
-        margin-bottom: 0px;
-        grid-column-start: 1;
-        grid-column-end: calc(var(--grid-columns) + 1);
-      }
-    }
-  }
-}
-</style>

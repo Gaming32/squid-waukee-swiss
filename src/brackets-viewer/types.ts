@@ -131,13 +131,6 @@ export interface Config {
   onMatchClick?: MatchClickCallback
 
   /**
-   * A callback to be called when a match's label is clicked.
-   *
-   * @default undefined
-   */
-  onMatchLabelClick?: MatchClickCallback
-
-  /**
    * A function to deeply customize the names of the rounds.
    * If you just want to **translate some words**, please use `addLocale()` instead.
    *
@@ -184,27 +177,6 @@ export interface Config {
    * @default true
    */
   showLowerBracketSlotsOrigin?: boolean
-
-  /**
-   * Display a popover when the label of a match with child games is clicked.
-   *
-   * @default true
-   */
-  showPopoverOnMatchLabelClick?: boolean
-
-  /**
-   * Whether to highlight every instance of a participant on hover.
-   *
-   * @default true
-   */
-  highlightParticipantOnHover?: boolean
-
-  /**
-   * Whether to show a ranking table on round-robin stages.
-   *
-   * @default true
-   */
-  showRankingTable?: boolean
 
   /**
    * A formula to compute the ranking of the participants on round-robin stages.

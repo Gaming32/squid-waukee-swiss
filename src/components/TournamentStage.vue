@@ -84,7 +84,6 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
       {
         id: 0,
         tournament_id: '',
-        name: '',
         type: props.stageInfo.type === 'swiss' ? 'round_robin' : 'single_elimination',
         settings: {},
         number: 0,

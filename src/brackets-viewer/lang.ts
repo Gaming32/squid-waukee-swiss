@@ -220,15 +220,6 @@ export function getMatchStatus(status: Status): string {
 }
 
 /**
- * Returns the name of a group.
- *
- * @param groupNumber Number of the group.
- */
-export function getGroupName(groupNumber: number): string {
-  return t('common.group-name', { groupNumber })
-}
-
-/**
  * Returns the name of the bracket.
  *
  * @param stage The current stage.

@@ -337,7 +337,7 @@ function nextRound() {
         Clear all and edit tournament
       </button>
 
-      <div v-if="tournament" class="stages-align">
+      <div class="stages-align">
         <template v-if="tournamentFormat.type === 'swiss'">
           <TournamentStage
             title="Swiss"
@@ -369,17 +369,16 @@ function nextRound() {
             @hover="hover"
           />
         </template>
-        <template v-else-if="tournamentFormat.type === 'single_elimination'">
-          <TournamentStage
-            :stageInfo="{ type: 'playoffs' /* TODO: rename */ }"
-            :ordered-teams="[]"
-            :team-names="teamNames"
-            :matches="tournamentMatches"
-            :highlighted-team="highlightedTeam"
-            @match-clicked="reportScore"
-            @hover="hover"
-          />
-        </template>
+        <TournamentStage
+          v-else-if="tournamentFormat.type === 'single_elimination'"
+          :stageInfo="{ type: 'playoffs' /* TODO: rename */ }"
+          :ordered-teams="[]"
+          :team-names="teamNames"
+          :matches="tournamentMatches"
+          :highlighted-team="highlightedTeam"
+          @match-clicked="reportScore"
+          @hover="hover"
+        />
 
         <div v-if="currentRoundMapData" class="print-hide">
           <h3>{{ currentRoundMapData.name }} Map Pool</h3>
