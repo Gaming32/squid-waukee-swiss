@@ -136,6 +136,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+        min-width: calc(2 * (var(--match-width) + 10px));
         max-width: calc(4 * (var(--match-width) + 10px));
 
         .match {
