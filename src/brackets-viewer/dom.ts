@@ -328,7 +328,6 @@ export function getBracketConnection(
   roundCount: number,
   originMatches: number,
   childOriginMatches: number | null,
-  _match: Match,
   matchLocation?: GroupType,
   connectFinal?: boolean,
 ): Connection {

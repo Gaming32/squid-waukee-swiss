@@ -19,15 +19,16 @@ declare global {
   }
 }
 
-export interface MatchWithPath extends Match {
+export interface MatchWithExtras extends Match {
   id: string
   winDestination: string | null
+  bye: boolean
 }
 
 /**
  * A match with metadata constructed by the viewer.
  */
-export interface MatchWithMetadata extends MatchWithPath {
+export interface MatchWithMetadata extends MatchWithExtras {
   metadata: {
     // Information known since the beginning
 
@@ -76,7 +77,7 @@ export interface ViewerData {
   stage: Stage
 
   /** The matches of the stage to display. */
-  matches: MatchWithPath[]
+  matches: MatchWithExtras[]
 
   /** The games of the matches to display. */
   matchGames: MatchGame[]

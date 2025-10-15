@@ -331,6 +331,7 @@
       // Participant origin hint (e.g. #1)
       &.hint {
         color: var(--hint-color);
+        font-style: italic;
       }
 
       & > img {

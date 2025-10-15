@@ -2,9 +2,9 @@
 import type { AdditionalStandingsValues } from '@/tournament'
 import type { Match } from 'tournament-organizer/components'
 import { Status } from 'brackets-model'
-import BracketRenderer from './BracketRenderer.vue'
 import { computed } from 'vue'
 import type { ViewerData } from '@/brackets-viewer'
+import BracketViewer from '@/brackets-viewer-vue/BracketViewer.vue'
 
 export type StageInfo =
   | {
@@ -23,7 +23,7 @@ const props = defineProps<{
 
   orderedTeams: string[]
   teamNames: { [id: string]: string }
-  matches: Match[] // TODO: Store bestOf in match meta
+  matches: Match[]
 
   highlightedTeam?: string
 }>()
@@ -75,19 +75,20 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
       opponent1: getOpponent(match.player1),
       opponent2: getOpponent(match.player2),
       winDestination: match.path.win,
+      bye: match.bye,
     }
   })
 })
 const bracketRendererBrackets = computed<ViewerData>(() => {
   return {
     stage: {
-        id: 0,
-        tournament_id: '',
-        name: '',
-        type: props.stageInfo.type === 'swiss' ? 'round_robin' : 'single_elimination',
-        settings: {},
-        number: 0,
-      },
+      id: 0,
+      tournament_id: '',
+      name: '',
+      type: props.stageInfo.type === 'swiss' ? 'round_robin' : 'single_elimination',
+      settings: {},
+      number: 0,
+    },
     matches: bracketRendererMatches.value,
     matchGames: [],
     participants: bracketRendererParticipants.value,
@@ -111,11 +112,11 @@ const hasDrops = computed(
   <div class="stage-root">
     <h2 v-if="title" class="low-margin-title">{{ title }}</h2>
 
-    <BracketRenderer
+    <BracketViewer
       v-if="bracketRendererMatches.length"
-      :brackets="bracketRendererBrackets"
+      :data="bracketRendererBrackets"
       :highlight-team="highlightedTeam"
-      @match-clicked="(matchId) => emit('matchClicked', matchId.toString())"
+      @match-clicked="(match) => emit('matchClicked', match.id.toString())"
       @hover="(team) => emit('hover', team)"
     />
 

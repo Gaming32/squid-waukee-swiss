@@ -1,5 +1,4 @@
 import i18next, { type StringMap, type TOptions, type TFunction } from 'i18next'
-import LanguageDetector from 'i18next-browser-languagedetector'
 
 import type { Stage, FinalType, GroupType, StageType } from 'brackets-model'
 import { Status } from 'brackets-model'
@@ -13,16 +12,6 @@ export type { TFunction } from 'i18next'
 export const locales = { en }
 
 export type Locale = (typeof locales)['en']
-
-void i18next.use(LanguageDetector).init({
-  fallbackLng: 'en',
-  debug: false,
-  resources: {
-    en: {
-      translation: locales.en,
-    },
-  },
-})
 
 /**
  * Adds a locale to the available i18n bundles.

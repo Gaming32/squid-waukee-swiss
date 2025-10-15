@@ -56,10 +56,10 @@ const stageSections = computed(() =>
             </td>
             <td>{{ team.name }}</td>
             <td class="matches-list-column">
-              <template v-for="(predicate, predicateIndex) in stageSections">
+              <template v-for="predicate in stageSections">
                 <div
                   v-if="completedMatchesPerTeam[team.id]?.some(predicate)"
-                  :key="predicateIndex"
+                  :key="predicate.toString()"
                   class="stage"
                 >
                   <div

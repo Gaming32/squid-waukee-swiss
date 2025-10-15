@@ -451,7 +451,7 @@ export class BracketsViewer {
         getRoundName,
       )
 
-      const { roundWrapper, roundContainer } = dom.createRoundContainer(roundId, roundName, false)
+      const { roundContainer } = dom.createRoundContainer(roundId, roundName, false)
 
       const roundMatches = matchesByRound[roundIndex]!
       for (const match of roundMatches) {
@@ -478,7 +478,7 @@ export class BracketsViewer {
         )
       }
 
-      roundsContainer.append(roundWrapper)
+      roundsContainer.append(roundContainer)
     }
 
     bracketContainer.append(roundsContainer)
@@ -533,13 +533,9 @@ export class BracketsViewer {
         },
       }
 
-      const { roundWrapper, roundContainer } = dom.createRoundContainer(
-        finalMatch.round_id,
-        roundName,
-        false,
-      )
+      const { roundContainer } = dom.createRoundContainer(finalMatch.round_id, roundName, false)
       roundContainer.append(this.createFinalMatch(finalType, finalMatch))
-      upperBracket.append(roundWrapper)
+      upperBracket.append(roundContainer)
     }
   }
 
@@ -575,7 +571,6 @@ export class BracketsViewer {
       roundCount,
       originMatches,
       childOriginMatches,
-      match,
       matchLocation,
       connectFinal,
     )
