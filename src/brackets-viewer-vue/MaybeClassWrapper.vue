@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { defineProps } from 'vue'
-
 defineProps<{
   classes: { [className: string]: boolean | undefined }
 }>()
