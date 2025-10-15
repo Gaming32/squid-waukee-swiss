@@ -13,7 +13,7 @@ export type StageInfo =
       standings: AdditionalStandingsValues[]
     }
   | {
-      type: 'playoffs'
+      type: 'single_elimination'
     }
 
 const props = defineProps<{
