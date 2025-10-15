@@ -342,7 +342,7 @@ function nextRound() {
           <TournamentStage
             title="Swiss"
             :stage-active="tournament.status === 'stage-one'"
-            :stageInfo="{
+            :stage-info="{
               type: 'swiss',
               roundCount: swissRoundCount,
               standings: swissStandings,
@@ -360,7 +360,7 @@ function nextRound() {
           <TournamentStage
             v-if="tournament.status === 'stage-two' || tournament.status == 'complete'"
             title="Playoffs"
-            :stageInfo="{ type: 'single_elimination' }"
+            :stage-info="{ type: 'single_elimination' }"
             :ordered-teams="swissStandings.map((s) => s.player.id)"
             :team-names="teamNames"
             :matches="tournamentMatches.filter((m) => m.round > swissRoundCount)"
@@ -371,7 +371,7 @@ function nextRound() {
         </template>
         <TournamentStage
           v-else-if="tournamentFormat.type === 'single_elimination'"
-          :stageInfo="{ type: 'single_elimination' /* TODO: rename */ }"
+          :stage-info="{ type: 'single_elimination' /* TODO: rename */ }"
           :ordered-teams="[]"
           :team-names="teamNames"
           :matches="tournamentMatches"
