@@ -112,6 +112,13 @@ const hasDrops = computed(
   <div class="stage-root">
     <h2 v-if="title" class="low-margin-title">{{ title }}</h2>
 
+    <!-- <BracketRenderer
+      v-if="bracketRendererMatches.length"
+      :brackets="bracketRendererBrackets"
+      :highlight-team="highlightedTeam"
+      @match-clicked="(matchId) => emit('matchClicked', matchId.toString())"
+      @hover="(team) => emit('hover', team)"
+    /> -->
     <BracketViewer
       v-if="bracketRendererMatches.length"
       :data="bracketRendererBrackets"
