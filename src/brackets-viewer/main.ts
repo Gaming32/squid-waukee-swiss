@@ -19,7 +19,6 @@ import {
 } from './helpers'
 import * as dom from './dom'
 import * as lang from './lang'
-import type { Locale } from './lang'
 import type {
   Config,
   OriginHint,
@@ -83,7 +82,6 @@ export class BracketsViewer {
       separatedChildCountLabel: config?.separatedChildCountLabel ?? false,
       showSlotsOrigin: config?.showSlotsOrigin ?? true,
       showLowerBracketSlotsOrigin: config?.showLowerBracketSlotsOrigin ?? true,
-      rankingFormula: config?.rankingFormula,
     }
 
     if (config?.onMatchClick) this._onMatchClick = config.onMatchClick
@@ -141,16 +139,6 @@ export class BracketsViewer {
    */
   public setParticipantImages(images: ParticipantImage[]): void {
     this.participantImages = images
-  }
-
-  /**
-   * Adds a locale to the available i18n bundles.
-   *
-   * @param name Name of the locale.
-   * @param locale Contents of the locale.
-   */
-  public async addLocale(name: string, locale: Locale): Promise<void> {
-    await lang.addLocale(name, locale)
   }
 
   /**

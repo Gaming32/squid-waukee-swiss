@@ -1,5 +1,5 @@
 import type { Match, GroupType, MatchGame } from 'brackets-model'
-import type { RankingHeader, RankingItem, Side } from './types'
+import type { Side } from './types'
 import { t } from './lang'
 
 /**
@@ -133,15 +133,6 @@ export function getOriginAbbreviation(
  */
 export function isMajorRound(roundNumber: number): boolean {
   return roundNumber === 1 || roundNumber % 2 === 0
-}
-
-/**
- * Returns the header for a ranking property.
- *
- * @param itemName Name of the ranking property.
- */
-export function rankingHeader(itemName: keyof RankingItem): RankingHeader {
-  return t(`ranking.${itemName}`, { returnObjects: true }) as RankingHeader
 }
 
 /**

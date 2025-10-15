@@ -1,28 +1,9 @@
-import i18next, { type StringMap, type TOptions, type TFunction } from 'i18next'
-
 import type { Stage, FinalType, GroupType, StageType } from 'brackets-model'
 import { Status } from 'brackets-model'
 import { isMajorRound } from './helpers'
 import type { OriginHint, RoundNameInfo } from './types'
 
-import en from './i18n/en/translation.json'
-
-export type { TFunction } from 'i18next'
-
-export const locales = { en }
-
-export type Locale = (typeof locales)['en']
-
-/**
- * Adds a locale to the available i18n bundles.
- *
- * @param name Name of the locale.
- * @param locale Contents of the locale.
- */
-export async function addLocale(name: string, locale: Locale): Promise<void> {
-  i18next.addResourceBundle(name, 'translation', locale, true, true)
-  await i18next.changeLanguage()
-}
+export type TFunction = (key: string, options?: object) => string
 
 /**
  * Returns an internationalized version of a locale key.
@@ -30,12 +11,8 @@ export async function addLocale(name: string, locale: Locale): Promise<void> {
  * @param key A locale key.
  * @param options Data to pass to the i18n process.
  */
-export function t<
-  Scope extends keyof Locale,
-  SubKey extends string & keyof Locale[Scope],
-  T extends TOptions,
->(key: `${Scope}.${SubKey}`, options?: T): T['returnObjects'] extends true ? StringMap : string {
-  return i18next.t(key, options)
+export function t(key: string, options?: object): string {
+  return `${key} (${options})`
 }
 
 export type ToI18nKey<S extends string> = S extends `${infer A}_${infer B}` ? `${A}-${B}` : never
