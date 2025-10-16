@@ -196,7 +196,7 @@ export function computeFinalStandings(
   if (format === 'swiss') {
     return {}
   }
-  const result: { [placement: number]: Player[] } = []
+  const result: { [placement: number]: Player[] } = {}
 
   const final = last(
     format !== 'double-elimination'
@@ -229,7 +229,9 @@ export function computeFinalStandings(
         resultsAtRank.push(tournament.getPlayer(loser.id!))
       }
     }
-    result[currentRank] = resultsAtRank
+    if (resultsAtRank.length) {
+      result[currentRank] = resultsAtRank
+    }
     currentRank += matches.length
   }
 
