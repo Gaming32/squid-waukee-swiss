@@ -2,8 +2,8 @@
 import type { Match } from 'tournament-organizer/components'
 import { Status } from 'brackets-model'
 import { computed } from 'vue'
-import type { ViewerData } from '@/brackets-viewer'
-import BracketViewer from '@/brackets-viewer-vue/BracketViewer.vue'
+import type { ViewerData } from '@/brackets-viewer/types'
+import BracketViewer from '@/brackets-viewer/BracketViewer.vue'
 import type { StandingsValues } from 'tournament-organizer/interfaces'
 import { computeSimpleRoundCount } from '@/format'
 

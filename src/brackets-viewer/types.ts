@@ -1,22 +1,28 @@
-import type {
-  Stage,
-  Match,
-  MatchGame,
-  Participant,
-  GroupType,
-  FinalType,
-  StageType,
-} from 'brackets-model'
-import { BracketsViewer } from './main'
-import type { ToI18nKey, TFunction } from './lang'
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Corentin Girard
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
-export type { ToI18nKey, TFunction }
-
-declare global {
-  interface Window {
-    bracketsViewer: BracketsViewer
-  }
-}
+import type { Stage, Match, MatchGame, Participant, GroupType, StageType } from 'brackets-model'
 
 export interface MatchWithExtras extends Match {
   id: string
@@ -65,13 +71,6 @@ export interface MatchWithMetadata extends MatchWithExtras {
   }
 }
 
-export interface MatchGameWithMetadata extends MatchGame {
-  metadata: {
-    /** Label as shown in the UI */
-    label?: string
-  }
-}
-
 /**
  * The data to display with `brackets-viewer.js`
  */
@@ -90,95 +89,9 @@ export interface ViewerData {
 }
 
 /**
- * The data to display with `brackets-viewer.js`
- */
-export interface InternalViewerData {
-  /** The stages to display. */
-  stages: Stage[]
-
-  /** The matches of the stage to display. */
-  matches: MatchWithMetadata[]
-
-  /** The participants who play in the stage to display. */
-  participants: Participant[]
-}
-
-/**
- * The possible placements of a participant's origin.
- */
-export type Placement = 'none' | 'before' | 'after'
-
-/**
  * The possible sides of a participant.
  */
 export type Side = 'opponent1' | 'opponent2'
-
-/**
- * An optional config to provide to `brackets-viewer.js`
- */
-export interface Config {
-  /**
-   * A callback to be called when a match is clicked.
-   *
-   * @default undefined
-   */
-  onMatchClick?: MatchClickCallback
-
-  /**
-   * A function to deeply customize the names of the rounds.
-   * If you just want to **translate some words**, please use `addLocale()` instead.
-   *
-   * @default undefined
-   */
-  customRoundName?: RoundNameGetter
-
-  /**
-   * An optional selector to select the root element.
-   *
-   * @default '.brackets-viewer'
-   */
-  selector?: string
-
-  /**
-   * Where the position of a participant is placed relative to its name.
-   * - If `none`, the position is not added.
-   * - If `before`, the position is prepended before the participant name. "#1 Team"
-   * - If `after`, the position is appended after the participant name, in parentheses. "Team (#1)"
-   *
-   * @default 'before'
-   */
-  participantOriginPlacement?: Placement
-
-  /**
-   * Whether to show the child count of a BoX match separately in the match label.
-   * - If `false`, the match label and the child count are in the same place. (Example: "M1.1, Bo3")
-   * - If `true`, the match label and the child count are in an opposite place. (Example: "M1.1   (right-->) Bo3")
-   *
-   * @default false
-   */
-  separatedChildCountLabel?: boolean
-
-  /**
-   * Whether to show the origin of a slot (wherever possible).
-   *
-   * @default true
-   */
-  showSlotsOrigin?: boolean
-
-  /**
-   * Whether to show the origin of a slot (in the lower bracket of an elimination stage).
-   *
-   * @default true
-   */
-  showLowerBracketSlotsOrigin?: boolean
-
-  /**
-   * Whether to clear any previously displayed data.
-   *
-   * @default false
-   */
-  clear?: boolean
-}
 
 /**
  * The possible types of connection between matches.
@@ -191,57 +104,9 @@ export type ConnectionType = 'square' | 'straight' | false
 export type OriginHint = (position: number) => string
 
 /**
- * Info associated to a round in order to name its header.
- */
-export type RoundNameInfo =
-  | {
-      groupType: Exclude<ToI18nKey<GroupType>, 'final-group'>
-      roundNumber: number
-      roundCount: number
-    }
-  | {
-      groupType: 'round-robin'
-      roundNumber: number
-      roundCount: number
-    }
-  | {
-      groupType: 'final-group'
-      finalType: ToI18nKey<FinalType>
-      roundNumber: number
-      roundCount: number
-    }
-
-/**
- * A function returning a round name based on its number and the count of rounds.
- */
-export type RoundNameGetter = (info: RoundNameInfo, t: TFunction) => string
-
-/**
- * A function called when a match is clicked.
- */
-export type MatchClickCallback = (match: MatchWithMetadata) => void
-
-/**
  * Contains the information about the connections of a match.
  */
 export interface Connection {
   connectPrevious?: ConnectionType
   connectNext?: ConnectionType
-}
-
-/**
- * Structure containing all the containers for a participant.
- */
-export interface ParticipantContainers {
-  participant: HTMLElement
-  name: HTMLElement
-  result: HTMLElement
-}
-
-/**
- * Image associated to a participant.
- */
-export interface ParticipantImage {
-  participantId: number
-  imageUrl: string
 }

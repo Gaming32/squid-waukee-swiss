@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { sortBy, splitByWithLeftovers, splitBy } from '@/brackets-viewer/helpers'
-import type { MatchWithMetadata, RoundNameGetter, ViewerData } from '@/brackets-viewer/types'
+import type { MatchWithMetadata, ViewerData } from '@/brackets-viewer/types'
 import { computed } from 'vue'
 import RoundRobinGroupMatches from './RoundRobinGroupMatches.vue'
 import SingleBracket from './SingleBracket.vue'
@@ -11,7 +11,6 @@ import type { GroupType } from 'brackets-model'
 const props = defineProps<{
   data: ViewerData
   highlightTeam?: string
-  customRoundName?: RoundNameGetter
 }>()
 
 const emit = defineEmits<{
