@@ -1,13 +1,7 @@
 import type { Round } from 'maps.iplabs.ink/src/types-interfaces/Interfaces'
 import { appendOrAdd, filledArray } from './utils'
-import type { SettableTournamentValues } from 'tournament-organizer/interfaces'
-import {
-  compareStandingsValues,
-  type AdditionalStandingsValues,
-  type CustomStandingsTournament,
-} from './tournament'
-import type { Player } from 'tournament-organizer/components'
-import { groupBy } from 'lodash'
+import type { SettableTournamentValues, StandingsValues } from 'tournament-organizer/interfaces'
+import type { Player, Tournament } from 'tournament-organizer/components'
 
 export type SwissFormatSettings = {
   swissBestOf: number
@@ -105,6 +99,14 @@ export function createInitialTournamentOrganizerFormatSettings(
       return {
         scoring: {
           bestOf: format.swissBestOf,
+          draw: 0,
+          tiebreaks: [
+            'neighboring points', // FIXME This is wins against tied, not losses against tied
+            'opponent match win percentage',
+            'cumulative',
+            // 'game losses', // FIXME
+            'opponent game win percentage',
+          ],
         },
         stageOne: {
           format: 'swiss',
@@ -129,64 +131,52 @@ export function createInitialTournamentOrganizerFormatSettings(
   }
 }
 
-function computeSingleElimFinalStandings(
-  tournament: CustomStandingsTournament,
-  firstRound: number = 0,
-) {
-  const standings: { [standing: number]: Player[] } = {}
-
-  const maxRound = Math.max(...tournament.matches.map((m) => m.round))
-  const matches = groupBy(tournament.matches, 'round')
-
-  const overallWinner = tournament.winnerLoserOf(matches[maxRound]?.[0])?.[0]
-  if (overallWinner) {
-    standings[1] = [overallWinner]
-  }
-
-  let currentRound = maxRound
-  let standing = 2
-  while (currentRound >= firstRound) {
-    const matchesInRound = matches[currentRound] ?? []
-    const losersInRound = matchesInRound
-      .map((m) => tournament.winnerLoserOf(m)?.[1])
-      .filter((x) => x !== undefined)
-    if (losersInRound.length) {
-      standings[standing] = losersInRound
-    }
-    standing += standing - 1 - matchesInRound.filter((m) => m.bye).length
-    currentRound--
-  }
-
-  return standings
-}
-
 export function computeFinalStandings(
-  format: TournamentFormat['type'],
-  tournament: CustomStandingsTournament,
-  swissStandings: AdditionalStandingsValues[],
+  tournament: Tournament,
+  swissStandings: StandingsValues[],
+  firstEliminationRound: number,
 ) {
-  switch (format) {
-    case 'swiss': {
-      if (tournament.status === 'stage-one') {
-        return {}
-      }
-      const topCutCount = tournament.stageTwo.advance.value
-      const standings = computeSingleElimFinalStandings(tournament, tournament.stageOne.rounds + 1)
-      let standing = topCutCount
-      let previousStandingValues: AdditionalStandingsValues | null = null
-      for (const standingValues of swissStandings.slice(topCutCount)) {
-        if (
-          previousStandingValues === null ||
-          compareStandingsValues(previousStandingValues, standingValues) > 0
-        ) {
-          standing++
-        }
-        appendOrAdd(standings, standing, standingValues.player)
-        previousStandingValues = standingValues
-      }
-      return standings
-    }
-    case 'single_elimination':
-      return computeSingleElimFinalStandings(tournament)
+  const format = tournament.getCurrentFormat()
+  if (format === 'swiss') {
+    return {}
   }
+  const result: { [placement: number]: Player[] } = []
+
+  const final = tournament.getMatches()[tournament.getMatches().length - 1]!
+  if (final.hasEnded()) {
+    result[1] = [tournament.getPlayer(final.getWinner()!.id!)]
+    result[2] = [tournament.getPlayer(final.getLoser()!.id!)]
+  }
+
+  const firstLoserRound = tournament
+    .getMatches()
+    .find((m) => m.getRoundNumber() >= firstEliminationRound && m.getPath().loss === null)!
+    .getRoundNumber()
+  let currentRank = 3
+  for (let round = final.getRoundNumber() - 1; round >= firstLoserRound; round--) {
+    const matches = tournament.getMatchesByRound(round)
+    const resultsAtRank: Player[] = []
+    for (const match of matches) {
+      const loser = match.getLoser()
+      if (loser) {
+        resultsAtRank.push(tournament.getPlayer(loser.id!))
+      }
+    }
+    result[currentRank] = resultsAtRank
+    currentRank += matches.length
+  }
+
+  let previousStanding: StandingsValues | null = null
+  for (const standing of swissStandings.slice(currentRank - 1)) {
+    if (
+      previousStanding !== null &&
+      tournament['sortForStandings'](standing, previousStanding, firstEliminationRound - 1) > 0
+    ) {
+      currentRank++
+    }
+    previousStanding = standing
+    appendOrAdd(result, currentRank, standing.player)
+  }
+
+  return result
 }

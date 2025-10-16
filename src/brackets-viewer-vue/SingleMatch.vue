@@ -47,11 +47,7 @@ const participantConnectionClasses = computed(() => {
 
 <template>
   <MaybeClassWrapper :classes="matchWrapperClasses">
-    <div
-      :class="matchConnectionClasses"
-      :data-match-id="match.id"
-      :data-match-status="match.status"
-    >
+    <div :class="matchConnectionClasses" :data-match-id="match.id">
       <div :class="participantConnectionClasses" @click="emit('matchClicked', match)">
         <MatchParticipant
           :participants="participants"

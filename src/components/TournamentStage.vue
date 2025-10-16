@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import type { AdditionalStandingsValues } from '@/tournament'
 import type { Match } from 'tournament-organizer/components'
 import { Status } from 'brackets-model'
 import { computed } from 'vue'
 import type { ViewerData } from '@/brackets-viewer'
 import BracketViewer from '@/brackets-viewer-vue/BracketViewer.vue'
+import type { StandingsValues } from 'tournament-organizer/interfaces'
 
 export type StageInfo =
   | {
       type: 'swiss'
       roundCount: number
-      standings: AdditionalStandingsValues[]
+      standings: StandingsValues[]
     }
   | {
       type: 'single_elimination'
@@ -45,7 +45,7 @@ const bracketRendererParticipants = computed<ViewerData['participants']>(() =>
   }),
 )
 const bracketRendererMatches = computed<ViewerData['matches']>(() => {
-  return props.matches.map((match) => {
+  return props.matches.map<ViewerData['matches'][0]>((match) => {
     function getOpponent(team: Match['player1']): ViewerData['matches'][0]['opponent1'] {
       if (!team.id) {
         return null
@@ -53,29 +53,23 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
       const teamIndex = props.orderedTeams.findIndex((t) => t === team.id)
       return {
         id: team.id,
-        score: status === Status.Completed ? team.win : undefined,
+        score: match.hasEnded() ? team.win : undefined,
         position: teamIndex >= 0 ? teamIndex + 1 : undefined,
-        result: status !== Status.Completed ? undefined : team.win > team.loss ? 'win' : 'loss',
+        result: !match.hasEnded() ? undefined : team.win > team.loss ? 'win' : 'loss',
       }
     }
-    const status =
-      !match.player1.id || !match.player2.id
-        ? Status.Ready
-        : match.active
-          ? Status.Running
-          : Status.Completed
     return {
-      id: match.id,
+      id: match.getId(),
       stage_id: 0,
       group_id: 0,
-      round_id: match.round,
-      number: match.match,
-      child_count: match.meta.bestOf,
-      status,
-      opponent1: getOpponent(match.player1),
-      opponent2: getOpponent(match.player2),
-      winDestination: match.path.win,
-      bye: match.bye,
+      round_id: match.getRoundNumber(),
+      number: match.getMatchNumber(),
+      child_count: match.getMeta().bestOf,
+      status: Status.Locked, // Unused
+      opponent1: getOpponent(match.getPlayer1()),
+      opponent2: getOpponent(match.getPlayer2()),
+      winDestination: match.getPath().win,
+      bye: match.isBye(),
     }
   })
 })
@@ -95,16 +89,16 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
   }
 })
 
-const anyMatchesActive = computed(() => props.matches.some((m) => m.active))
+const anyMatchesActive = computed(() => props.matches.some((m) => m.isActive()))
 const finalSwissRound = computed(
   () =>
     props.stageInfo.type === 'swiss' &&
-    Math.max(...props.matches.map((m) => m.round)) === props.stageInfo.roundCount,
+    Math.max(...props.matches.map((m) => m.getRoundNumber())) === props.stageInfo.roundCount,
 )
 const hasDrops = computed(
   () =>
     props.stageInfo.type === 'swiss' &&
-    props.stageInfo.standings.some((team) => team.player.meta.dropped),
+    props.stageInfo.standings.some((team) => team.player.getMeta().dropped),
 )
 </script>
 
@@ -139,7 +133,7 @@ const hasDrops = computed(
               <th class="right-aligned">Rank</th>
               <th>Team</th>
               <th>W/L</th>
-              <th>TB</th>
+              <th>H2H</th>
               <th>OW%</th>
               <th>W/L (M)</th>
               <th>OW% (M)</th>
@@ -149,23 +143,23 @@ const hasDrops = computed(
           <tbody>
             <tr
               v-for="(team, rank) in stageInfo.standings"
-              :key="team.player.id"
-              :class="{ 'hovered-row': team.player.id === highlightedTeam }"
-              @mouseenter="() => emit('hover', team.player.id)"
+              :key="team.player.getId()"
+              :class="{ 'hovered-row': team.player.getId() === highlightedTeam }"
+              @mouseenter="() => emit('hover', team.player.getId())"
               @mouseleave="() => emit('hover')"
-              @touchstart="() => emit('hover', team.player.id)"
+              @touchstart="() => emit('hover', team.player.getId())"
               @touchend="() => emit('hover')"
             >
               <td class="right-aligned">{{ rank + 1 }}.</td>
-              <td>{{ team.player.name }}</td>
+              <td>{{ team.player.getName() }}</td>
               <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
-              <td>{{ -team.lossesAgainstTiedScore }}</td>
+              <td>{{ team.tiebreaks.neighboringPoints }}</td>
               <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
               <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
               <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
-              <td v-if="team.player.meta.dropped">Dropped</td>
+              <td v-if="team.player.getMeta().dropped">Dropped</td>
               <td v-else-if="stageActive">
-                <a class="icon-button" @click="() => emit('dropTeam', team.player.id)"> ❌ </a>
+                <a class="icon-button" @click="() => emit('dropTeam', team.player.getId())"> ❌ </a>
               </td>
               <td v-else-if="hasDrops"></td>
             </tr>
