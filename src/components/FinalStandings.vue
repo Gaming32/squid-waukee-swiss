@@ -8,7 +8,7 @@ const PLACEMENT_EMOJIS = ['🥇', '🥈', '🥉']
 const props = defineProps<{
   finalStandings: { [standing: number]: Player[] }
   completedMatchesPerTeam: { [team: string]: Match[] }
-  stageRoundCutoff?: number
+  stageRoundCutoffs: number[][]
 
   highlightedTeam?: string
 }>()
@@ -18,12 +18,11 @@ const emit = defineEmits<{
 }>()
 
 const stageSections = computed(() =>
-  props.stageRoundCutoff !== undefined
-    ? [
-        (match: Match) => match.getRoundNumber() < props.stageRoundCutoff!,
-        (match: Match) => match.getRoundNumber() >= props.stageRoundCutoff!,
-      ]
-    : [() => true],
+  props.stageRoundCutoffs.map(
+    ([first, last]) =>
+      (match: Match) =>
+        match.getRoundNumber() >= first! && match.getRoundNumber() <= last!,
+  ),
 )
 </script>
 

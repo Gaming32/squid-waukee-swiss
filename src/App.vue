@@ -14,10 +14,12 @@ import ReportScoreModal from './components/ReportScoreModal.vue'
 import SetupTourney from './components/SetupTourney.vue'
 import TournamentStage from './components/TournamentStage.vue'
 import { appendOrAdd } from './utils'
-import { findLast, groupBy } from 'lodash'
+import { last } from 'lodash'
 import FinalStandings from './components/FinalStandings.vue'
 import {
   computeFinalStandings,
+  computeLosersRoundCount,
+  computeSimpleRoundCount,
   createInitialTournamentOrganizerFormatSettings,
   createRounds,
   DEFAULT_TOURNAMENT_FORMAT,
@@ -55,33 +57,22 @@ const mapData = ref<MapData>({
   },
   rounds: [],
 })
-const currentRoundNumber = computed(() => {
-  const roundsNotReady = Object.entries(groupBy(tournamentMatches.value, (m) => m.getRoundNumber()))
-    .filter(([, ms]) =>
-      ms.some((m) => !m.isBye() && (m.getPlayer1().id === null || m.getPlayer2().id === null)),
-    )
-    .map(([r]) => Number.parseInt(r))
-  if (roundsNotReady.length) {
-    return Math.min(...roundsNotReady) - 1
+const currentRoundNumbers = computed(() => {
+  const tourney = tournament.value
+  if (tourney === null || tourney.getStatus() === 'complete') {
+    return []
   }
-  const finalMatch = findLast(tournamentMatches.value, (m) => !m.isBye())
-  if (finalMatch && tournament.value!.getStatus() !== 'complete') {
-    return finalMatch.getRoundNumber()
-  }
-  return null
+  return [
+    ...new Set(
+      tourney
+        .getMatches()
+        .filter((m) => m.isPaired() && !m.isBye() && !m.hasEnded())
+        .map((m) => m.getRoundNumber()),
+    ),
+  ]
 })
-const currentRoundMapData = computed(() => {
-  const roundNumber = currentRoundNumber.value
-  if (roundNumber === null) {
-    return null
-  }
-  return mapData.value.rounds[roundNumber - 1]
-})
-const currentRoundMapList = computed(
-  () =>
-    currentRoundMapData.value?.games.map((mapMode) =>
-      mapMode === 'counterpick' ? 'Counterpick' : `${mapMode.mode.toUpperCase()} ${mapMode.map}`,
-    ) ?? null,
+const currentRoundsMapData = computed(() =>
+  currentRoundNumbers.value.map((round) => mapData.value.rounds[round - 1]!),
 )
 
 const swissStandings = computed(() => {
@@ -119,6 +110,29 @@ const completedMatchesPerTeam = computed(() => {
   }
   return result
 })
+const stageRoundCutoffs = computed(() => {
+  const tourney = tournament.value
+  if (!tourney) {
+    return []
+  }
+  switch (tournamentFormat.value.type) {
+    case 'swiss':
+      return [
+        [1, tourney.getStageOne().rounds],
+        [tourney.getStageOne().rounds + 1, Infinity],
+      ]
+    case 'single_elimination':
+      return [[1, tourney.getStageOne().rounds]]
+    case 'double_elimination': {
+      const winnersRoundCount = computeSimpleRoundCount(tourney.getPlayers().length)
+      return [
+        [1, winnersRoundCount],
+        [winnersRoundCount + 2, Infinity],
+        [winnersRoundCount + 1, winnersRoundCount + 1],
+      ]
+    }
+  }
+})
 
 const highlightedTeam = ref<string>()
 
@@ -149,7 +163,7 @@ if (storageAvailable('localStorage')) {
   function watchAndStore<T>(
     key: string,
     source: WatchSource<T | null>,
-    /* eslint-disable @typescript-eslint/no-explicit-any */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     serializer: (value: T) => any = (x) => x,
   ) {
     watch(
@@ -195,9 +209,24 @@ function createTournament(format: TournamentFormat, mapPool: MapPool, teams: str
     match.getMeta().bestOf = newTournament.getScoring().bestOf
   }
   if (format.type === 'single_elimination') {
+    const semiFinalsRound = newTournament.getStageOne().rounds - 1
     for (const match of newTournament.getMatches()) {
-      if (match.getRoundNumber() >= newTournament.getStageOne().rounds - 1) {
+      if (match.getRoundNumber() >= semiFinalsRound) {
         match.getMeta().bestOf = format.finalsBestOf
+      }
+    }
+  } else if (format.type === 'double_elimination') {
+    const winnersFinalsRound = computeSimpleRoundCount(teams.length)
+    const grandFinalRound = winnersFinalsRound + 1
+    const losersFinalsRound = grandFinalRound + computeLosersRoundCount(winnersFinalsRound)
+    for (const match of newTournament.getMatches()) {
+      if (
+        match.getRoundNumber() === winnersFinalsRound ||
+        match.getRoundNumber() === losersFinalsRound
+      ) {
+        match.getMeta().bestOf = format.finalsBestOf
+      } else if (match.getRoundNumber() === grandFinalRound) {
+        match.getMeta().bestOf = format.grandFinalBestOf
       }
     }
   }
@@ -227,9 +256,6 @@ function reportScore(matchId: string) {
   if (!match || !match.getPlayer1().id || !match.getPlayer2().id || !match.isActive()) {
     return
   }
-  if (currentRoundNumber.value && match.getRoundNumber() > currentRoundNumber.value) {
-    return
-  }
 
   const bestOf: number = match.getMeta().bestOf
   const team1 = tournament.value!.getPlayer(match.getPlayer1().id!)
@@ -252,7 +278,7 @@ function reportScore(matchId: string) {
       tourney.enterResult(matchId, scores.score1, scores.score2)
       tourney.getScoring().bestOf = oldBestOf
 
-      if (tourney.getCurrentFormat() === 'single-elimination') {
+      if (tourney.getCurrentFormat() !== 'swiss') {
         nextRound()
       }
     },
@@ -283,6 +309,12 @@ function nextRound() {
       if (match.getRoundNumber() >= tourney.getRoundNumber()) {
         match.getMeta().bestOf = bestOf
       }
+    }
+  } else if (tournamentFormat.value.type === 'double_elimination') {
+    const grandFinalRound = computeSimpleRoundCount(tourney.getPlayers().length) + 1
+    const lastMatch = last(tourney.getMatches())!
+    if (lastMatch.getRoundNumber() === grandFinalRound) {
+      lastMatch.getMeta().bestOf = tournamentFormat.value.grandFinalBestOf
     }
   }
   if (tournamentMatches.value.every((m) => m.isBye() || m.hasEnded())) {
@@ -342,8 +374,11 @@ function nextRound() {
           />
         </template>
         <TournamentStage
-          v-else-if="tournamentFormat.type === 'single_elimination'"
-          :stage-info="{ type: 'single_elimination' /* TODO: rename */ }"
+          v-else-if="
+            tournamentFormat.type === 'single_elimination' ||
+            tournamentFormat.type === 'double_elimination'
+          "
+          :stage-info="{ type: tournamentFormat.type }"
           :ordered-teams="[]"
           :team-names="teamNames"
           :matches="tournamentMatches"
@@ -352,18 +387,24 @@ function nextRound() {
           @hover="hover"
         />
 
-        <div v-if="currentRoundMapData" class="print-hide">
-          <h3>{{ currentRoundMapData.name }} Map Pool</h3>
-          <ul>
-            <li v-for="mapMode in currentRoundMapList" :key="mapMode">
-              {{ mapMode }}
-            </li>
-          </ul>
+        <div v-if="currentRoundsMapData.length" class="print-hide">
+          <template v-for="data in currentRoundsMapData" :key="data.name">
+            <h3>{{ data.name }} Map Pool</h3>
+            <ul>
+              <li v-for="mapMode in data.games" :key="Object.values(mapMode).toString()">
+                {{
+                  mapMode === 'counterpick'
+                    ? 'Counterpick'
+                    : `${mapMode.mode.toUpperCase()} ${mapMode.map}`
+                }}
+              </li>
+            </ul>
+          </template>
         </div>
         <FinalStandings
           :final-standings="finalStandings"
           :completed-matches-per-team="completedMatchesPerTeam"
-          :stage-round-cutoff="tournament.getStageOne().rounds + 1"
+          :stage-round-cutoffs="stageRoundCutoffs"
           :highlighted-team="highlightedTeam"
           @hover="hover"
         />

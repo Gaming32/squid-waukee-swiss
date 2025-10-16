@@ -668,7 +668,10 @@ export class BracketsViewer {
 
       dom.setupConnection(opponents, matchContainer, match.metadata.connection)
 
-      if (match.metadata.childOriginMatches === 1) {
+      if (
+        match.metadata.childOriginMatches === 1 &&
+        (match.metadata.roundNumber! % 2 === 0 || match.metadata.matchLocation !== 'loser_bracket')
+      ) {
         return dom.createByeMatchWrapper(matchContainer, !!match.metadata.childSiblingOriginMatches)
       }
     }

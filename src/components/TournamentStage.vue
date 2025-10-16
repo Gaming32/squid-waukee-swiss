@@ -4,7 +4,9 @@ import { Status } from 'brackets-model'
 import { computed } from 'vue'
 import type { ViewerData } from '@/brackets-viewer'
 import BracketViewer from '@/brackets-viewer-vue/BracketViewer.vue'
+import BracketRenderer from './BracketRenderer.vue'
 import type { StandingsValues } from 'tournament-organizer/interfaces'
+import { computeSimpleRoundCount } from '@/format'
 
 export type StageInfo =
   | {
@@ -14,6 +16,9 @@ export type StageInfo =
     }
   | {
       type: 'single_elimination'
+    }
+  | {
+      type: 'double_elimination'
     }
 
 const props = defineProps<{
@@ -58,10 +63,21 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
         result: !match.hasEnded() ? undefined : team.win > team.loss ? 'win' : 'loss',
       }
     }
+    let groupId = 0
+    if (props.stageInfo.type === 'double_elimination') {
+      const winnersRoundCount = computeSimpleRoundCount(Object.values(props.teamNames).length)
+      if (match.getRoundNumber() > winnersRoundCount) {
+        if (match.getRoundNumber() === winnersRoundCount + 1) {
+          groupId = 2
+        } else {
+          groupId = 1
+        }
+      }
+    }
     return {
       id: match.getId(),
       stage_id: 0,
-      group_id: 0,
+      group_id: groupId,
       round_id: match.getRoundNumber(),
       number: match.getMatchNumber(),
       child_count: match.getMeta().bestOf,
@@ -79,7 +95,7 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
       id: 0,
       tournament_id: '',
       name: '',
-      type: props.stageInfo.type === 'swiss' ? 'round_robin' : 'single_elimination',
+      type: props.stageInfo.type === 'swiss' ? 'round_robin' : props.stageInfo.type,
       settings: {},
       number: 0,
     },
@@ -106,13 +122,13 @@ const hasDrops = computed(
   <div class="stage-root">
     <h2 v-if="title" class="low-margin-title">{{ title }}</h2>
 
-    <!-- <BracketRenderer
+    <BracketRenderer
       v-if="bracketRendererMatches.length"
       :brackets="bracketRendererBrackets"
       :highlight-team="highlightedTeam"
       @match-clicked="(matchId) => emit('matchClicked', matchId.toString())"
       @hover="(team) => emit('hover', team)"
-    /> -->
+    />
     <BracketViewer
       v-if="bracketRendererMatches.length"
       :data="bracketRendererBrackets"

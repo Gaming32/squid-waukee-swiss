@@ -9,10 +9,11 @@ export type TFunction = (key: string, options?: object) => string
  * Returns an internationalized version of a locale key.
  *
  * @param key A locale key.
- * @param options Data to pass to the i18n process.
+ * @param _options Data to pass to the i18n process.
  */
-export function t(key: string, options?: object): string {
-  return `${key} (${options})`
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function t(key: string, _options?: object): string {
+  return `${key.substring(key.indexOf('.') + 1)}`
 }
 
 export type ToI18nKey<S extends string> = S extends `${infer A}_${infer B}` ? `${A}-${B}` : never
