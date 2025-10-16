@@ -21,6 +21,7 @@ declare global {
 export interface MatchWithExtras extends Match {
   id: string
   winDestination: string | null
+  loseDestination: string | null
   bye: boolean
 }
 
@@ -49,6 +50,9 @@ export interface MatchWithMetadata extends MatchWithExtras {
     roundCount?: number
     /** Group type this match is in. */
     matchLocation?: GroupType
+
+    origins?: MatchWithMetadata[]
+    sibling?: string | null
 
     // Other information
 

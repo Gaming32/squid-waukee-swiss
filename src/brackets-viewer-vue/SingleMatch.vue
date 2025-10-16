@@ -18,7 +18,11 @@ const emit = defineEmits<{
 
 const matchWrapperClasses = computed(() => {
   const matchMetadata = props.match.metadata
-  if (!matchMetadata.connection || matchMetadata.childOriginMatches !== 1) {
+  if (
+    !matchMetadata.connection ||
+    matchMetadata.childOriginMatches !== 1 ||
+    (matchMetadata.roundNumber! % 2 !== 0 && matchMetadata.matchLocation === 'loser_bracket')
+  ) {
     return {}
   }
   return {
@@ -47,7 +51,7 @@ const participantConnectionClasses = computed(() => {
 
 <template>
   <MaybeClassWrapper :classes="matchWrapperClasses">
-    <div :class="matchConnectionClasses" :data-match-id="match.id">
+    <div :class="matchConnectionClasses">
       <div :class="participantConnectionClasses" @click="emit('matchClicked', match)">
         <MatchParticipant
           :participants="participants"

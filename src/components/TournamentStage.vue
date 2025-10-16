@@ -4,7 +4,6 @@ import { Status } from 'brackets-model'
 import { computed } from 'vue'
 import type { ViewerData } from '@/brackets-viewer'
 import BracketViewer from '@/brackets-viewer-vue/BracketViewer.vue'
-import BracketRenderer from './BracketRenderer.vue'
 import type { StandingsValues } from 'tournament-organizer/interfaces'
 import { computeSimpleRoundCount } from '@/format'
 
@@ -64,11 +63,13 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
       }
     }
     let groupId = 0
+    let number = match.getMatchNumber()
     if (props.stageInfo.type === 'double_elimination') {
       const winnersRoundCount = computeSimpleRoundCount(Object.values(props.teamNames).length)
       if (match.getRoundNumber() > winnersRoundCount) {
         if (match.getRoundNumber() === winnersRoundCount + 1) {
           groupId = 2
+          number = 1
         } else {
           groupId = 1
         }
@@ -79,12 +80,13 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
       stage_id: 0,
       group_id: groupId,
       round_id: match.getRoundNumber(),
-      number: match.getMatchNumber(),
+      number,
       child_count: match.getMeta().bestOf,
       status: Status.Locked, // Unused
       opponent1: getOpponent(match.getPlayer1()),
       opponent2: getOpponent(match.getPlayer2()),
       winDestination: match.getPath().win,
+      loseDestination: match.getPath().loss,
       bye: match.isBye(),
     }
   })
@@ -122,13 +124,6 @@ const hasDrops = computed(
   <div class="stage-root">
     <h2 v-if="title" class="low-margin-title">{{ title }}</h2>
 
-    <BracketRenderer
-      v-if="bracketRendererMatches.length"
-      :brackets="bracketRendererBrackets"
-      :highlight-team="highlightedTeam"
-      @match-clicked="(matchId) => emit('matchClicked', matchId.toString())"
-      @hover="(team) => emit('hover', team)"
-    />
     <BracketViewer
       v-if="bracketRendererMatches.length"
       :data="bracketRendererBrackets"

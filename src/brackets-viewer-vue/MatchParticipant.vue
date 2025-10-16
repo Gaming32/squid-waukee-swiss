@@ -70,6 +70,8 @@ const originAbbreviation = computed(() => {
 
   return `${prefix}${props.participant.position}`
 })
+
+const originHint = computed(() => props.originHint?.(props.side === 'opponent1' ? 0 : 1))
 </script>
 
 <template>
@@ -81,23 +83,22 @@ const originAbbreviation = computed(() => {
       win: participant?.result === 'win',
       loss: participant?.result === 'loss',
     }"
-    :data-participant-id="participant?.id"
     v-on="eventHandlers"
   >
     <template v-if="participant">
-      <div class="name" v-if="realParticipant" :title="realParticipant.name">
+      <div v-if="realParticipant" class="name" :title="realParticipant.name">
         <span v-if="originAbbreviation">{{ originAbbreviation }}</span>
         {{ realParticipant.name }}
       </div>
-      <div class="name hint" v-else>{{ originHint?.(side === 'opponent1' ? -2 : -1) }}</div>
+      <div v-else class="name hint" :title="originHint">{{ originHint }}</div>
       <div class="result">
         {{ participant.score === undefined ? '-' : participant.score }}
       </div>
     </template>
     <template v-else>
       <div v-if="bye" class="name bye">BYE</div>
-      <div v-else class="name hint">
-        {{ originHint?.(side === 'opponent1' ? -2 : -1) }}
+      <div v-else class="name hint" :title="originHint">
+        {{ originHint }}
       </div>
       <div class="result"></div>
     </template>
