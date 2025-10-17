@@ -22,14 +22,14 @@ const matchesByRound = computed(() =>
 </script>
 
 <template>
-  <div class="group" :data-group-id="groupMatches[0]!.group_id">
+  <div class="group">
     <div
       v-for="(roundMatches, roundIndex) in matchesByRound"
       :key="roundMatches[0]!.round_id"
       class="round-wrapper"
     >
       <h3>Round {{ roundIndex + 1 }}</h3>
-      <div class="round" :data-round-id="roundMatches[0]!.round_id">
+      <div class="round">
         <SingleMatch
           v-for="match in roundMatches"
           :key="match.id"

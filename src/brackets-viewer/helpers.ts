@@ -1,6 +1,26 @@
-import type { Match, GroupType, MatchGame } from 'brackets-model'
-import type { Side } from './types'
-import { t } from './lang'
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Corentin Girard
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 /**
  * Splits an array of objects based on their values at a given key.
@@ -69,86 +89,4 @@ export function sortBy<
   U extends Record<K, number>,
 >(array: U[], key: K): U[] {
   return [...array].sort((a, b) => a[key] - b[key])
-}
-
-/**
- * Finds the root element
- *
- * @param selector An optional selector to select the root element.
- */
-export function findRoot(selector?: string): HTMLElement {
-  const queryResult = document.querySelectorAll(selector || '.brackets-viewer')
-
-  if (queryResult.length === 0)
-    throw Error('Root not found. You must have at least one root element.')
-
-  if (queryResult.length > 1)
-    throw Error(
-      'Multiple possible roots were found. Please use `config.selector` to choose a specific root.',
-    )
-
-  const root = queryResult[0] as HTMLElement
-
-  if (!root.classList.contains('brackets-viewer'))
-    throw Error('The selected root must have a `.brackets-viewer` class.')
-
-  return root
-}
-
-/**
- * Returns the abbreviation for a participant origin.
- *
- * @param matchLocation Location of the match.
- * @param skipFirstRound Whether to skip the first round.
- * @param roundNumber Number of the round.
- * @param side Side of the participant.
- */
-export function getOriginAbbreviation(
-  matchLocation: GroupType,
-  skipFirstRound: boolean,
-  roundNumber?: number,
-  side?: Side,
-): string | null {
-  roundNumber = roundNumber || -1
-
-  if (skipFirstRound && matchLocation === 'loser_bracket' && roundNumber === 1)
-    return t('abbreviations.seed')
-
-  if (
-    matchLocation === 'single_bracket' ||
-    (matchLocation === 'winner_bracket' && roundNumber === 1)
-  )
-    return t('abbreviations.seed')
-
-  if (matchLocation === 'loser_bracket' && roundNumber % 2 === 0 && side === 'opponent1')
-    return t('abbreviations.position')
-
-  return null
-}
-
-/**
- * Indicates whether a round is major.
- *
- * @param roundNumber Number of the round.
- */
-export function isMajorRound(roundNumber: number): boolean {
-  return roundNumber === 1 || roundNumber % 2 === 0
-}
-
-/**
- * Indicates whether the input is a match.
- *
- * @param input A match or a match game.
- */
-export function isMatch(input: Match | MatchGame): input is Match {
-  return 'child_count' in input
-}
-
-/**
- * Indicates whether the input is a match game.
- *
- * @param input A match or a match game.
- */
-export function isMatchGame(input: Match | MatchGame): input is MatchGame {
-  return !isMatch(input)
 }

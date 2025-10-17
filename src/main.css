@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
-@import '../brackets-viewer/style.scss';
+@import 'brackets-viewer/style.scss';
 
 .brackets-viewer {
   --primary-background: var(--wa-color-surface-default);

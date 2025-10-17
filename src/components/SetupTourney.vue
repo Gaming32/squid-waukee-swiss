@@ -7,6 +7,7 @@ import {
 } from 'maps.iplabs.ink/src/helpers/AppContext'
 import { modeAbbreviationToWords, maps as allMaps } from 'maps.iplabs.ink/src/helpers/MapMode'
 import {
+  DEFAULT_DOUBLE_ELIMINATION_SETTINGS,
   DEFAULT_SINGLE_ELIMINATION_SETTINGS,
   DEFAULT_SWISS_SETTINGS,
   type TournamentFormat,
@@ -28,6 +29,7 @@ function pluralFormat(n: number, what: string) {
 
 const swissSettings = ref(DEFAULT_SWISS_SETTINGS)
 const singleEliminationSettings = ref(DEFAULT_SINGLE_ELIMINATION_SETTINGS)
+const doubleEliminationSettings = ref(DEFAULT_DOUBLE_ELIMINATION_SETTINGS)
 const tournamentFormatType = ref(props.initialFormat.type)
 switch (props.initialFormat.type) {
   case 'swiss':
@@ -35,6 +37,9 @@ switch (props.initialFormat.type) {
     break
   case 'single_elimination':
     singleEliminationSettings.value = props.initialFormat
+    break
+  case 'double_elimination':
+    doubleEliminationSettings.value = props.initialFormat
     break
 }
 
@@ -44,6 +49,8 @@ const tournamentFormat = computed<TournamentFormat>(() => {
       return { type: 'swiss', ...swissSettings.value }
     case 'single_elimination':
       return { type: 'single_elimination', ...singleEliminationSettings.value }
+    case 'double_elimination':
+      return { type: 'double_elimination', ...doubleEliminationSettings.value }
   }
 })
 const formattedTournamentFormat = computed(() => {
@@ -53,6 +60,18 @@ const formattedTournamentFormat = computed(() => {
       return `Swiss Bo${format.swissBestOf} → Top ${format.advancementCutoff}, Bo${format.playoffsBestOf}`
     case 'single_elimination':
       return `Single Elim Bo${format.bestOf} → Bo${format.finalsBestOf}`
+    case 'double_elimination':
+      return `Double Elim Bo${format.bestOf} → Bo${format.finalsBestOf} → Bo${format.grandFinalBestOf}`
+  }
+})
+
+const minimumTeams = computed(() => {
+  switch (tournamentFormatType.value) {
+    case 'swiss':
+    case 'single_elimination':
+      return 2
+    case 'double_elimination':
+      return 4
   }
 })
 
@@ -130,6 +149,7 @@ function deleteTeam(index: number) {
         <select class="narrow-element padded-select" v-model="tournamentFormatType">
           <option value="swiss">Swiss</option>
           <option value="single_elimination">Single Elimination</option>
+          <option value="double_elimination">Double Elimination</option>
         </select>
       </div>
       <template v-if="tournamentFormatType === 'swiss'">
@@ -152,8 +172,27 @@ function deleteTeam(index: number) {
           <input type="number" v-model="singleEliminationSettings.bestOf" min="1" step="2" />
         </div>
         <div class="margin-element">
-          Finals Best Of:
+          Semis/Finals Best Of:
           <input type="number" v-model="singleEliminationSettings.finalsBestOf" min="1" step="2" />
+        </div>
+      </template>
+      <template v-else-if="tournamentFormatType === 'double_elimination'">
+        <div class="margin-element">
+          Best Of:
+          <input type="number" v-model="doubleEliminationSettings.bestOf" min="1" step="2" />
+        </div>
+        <div class="margin-element">
+          Finals Best Of:
+          <input type="number" v-model="doubleEliminationSettings.finalsBestOf" min="1" step="2" />
+        </div>
+        <div class="margin-element">
+          Grand Final Best Of:
+          <input
+            type="number"
+            v-model="doubleEliminationSettings.grandFinalBestOf"
+            min="1"
+            step="2"
+          />
         </div>
       </template>
     </details>
@@ -258,7 +297,7 @@ function deleteTeam(index: number) {
     <p>
       <button
         class="wa-success"
-        :disabled="teams.length < 2 || !totalMapModes"
+        :disabled="teams.length < minimumTeams || !totalMapModes"
         @click="() => emit('finish', tournamentFormat, mapPool, teams)"
       >
         Let's go!
