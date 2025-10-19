@@ -336,9 +336,7 @@ input[type='number'] {
 .selectable-mode-text {
   padding-left: 0.5em;
   display: inline;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-underline-offset: 0.2em;
+  user-select: none;
 }
 
 .map-selector {

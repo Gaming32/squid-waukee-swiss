@@ -13,6 +13,12 @@ body {
   padding: 15px;
 }
 
+th[title] {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.2em;
+}
+
 @media print {
   button {
     display: none;

@@ -142,10 +142,10 @@ const hasDrops = computed(
               <th class="right-aligned">Rank</th>
               <th>Team</th>
               <th>W/L</th>
-              <th>TB</th>
-              <th>OW%</th>
+              <th title="Matches against tied opponents">TB</th>
+              <th title="Opponent win percentage">OW%</th>
               <th>W/L (M)</th>
-              <th>OW% (M)</th>
+              <th title="Opponent match win percentage">OW% (M)</th>
               <th v-if="stageActive || hasDrops">Drop</th>
             </tr>
           </thead>
