@@ -145,10 +145,10 @@ export function createInitialTournamentOrganizerFormatSettings(
           bestOf: format.swissBestOf,
           draw: 0,
           tiebreaks: [
-            'neighboring record',
+            // 'neighboring record',
             'opponent match win percentage',
-            'earned game wins',
-            'earned game losses',
+            // 'earned game wins',
+            // 'earned game losses',
             'opponent game win percentage',
           ],
         },
