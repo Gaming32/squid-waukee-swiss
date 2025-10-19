@@ -7,13 +7,11 @@ import type { Participant } from 'brackets-model'
 
 const props = defineProps<{
   participants: Participant[]
-  highlightTeam?: string
   groupMatches: MatchWithMetadata[]
 }>()
 
 const emit = defineEmits<{
   (e: 'matchClicked', match: MatchWithMetadata): void
-  (e: 'hover', team?: string): void
 }>()
 
 const matchesByRound = computed(() =>
@@ -34,10 +32,8 @@ const matchesByRound = computed(() =>
           v-for="match in roundMatches"
           :key="match.id"
           :participants="participants"
-          :highlight-team="highlightTeam"
           :match="match"
           @match-clicked="(m) => emit('matchClicked', m)"
-          @hover="(team) => emit('hover', team)"
         />
       </div>
     </div>

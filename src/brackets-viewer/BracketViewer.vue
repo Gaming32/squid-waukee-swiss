@@ -10,12 +10,10 @@ import type { GroupType } from 'brackets-model'
 
 const props = defineProps<{
   data: ViewerData
-  highlightTeam?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'matchClicked', match: MatchWithMetadata): void
-  (e: 'hover', team?: string): void
 }>()
 
 const matches = computed(() => {
@@ -67,10 +65,8 @@ const matches = computed(() => {
         v-for="groupMatches in matches.matchesByGroup"
         :key="groupMatches[0]!.group_id"
         :participants="data.participants"
-        :highlight-team="highlightTeam"
         :group-matches="groupMatches"
         @match-clicked="(m) => emit('matchClicked', m)"
-        @hover="(team) => emit('hover', team)"
       />
     </div>
     <div
@@ -82,7 +78,6 @@ const matches = computed(() => {
       <template v-if="data.stage.type === 'single_elimination'">
         <SingleBracket
           :participants="data.participants"
-          :highlight-team="highlightTeam"
           :matches-by-id="matches.matchesById"
           :matches-by-round="
             splitBy(matches.matchesByGroup[0]!, 'round_id').map((matches) =>
@@ -100,13 +95,11 @@ const matches = computed(() => {
           bracket-type="single_bracket"
           :connect-final="false"
           @match-clicked="(m) => emit('matchClicked', m)"
-          @hover="(team) => emit('hover', team)"
         />
       </template>
       <template v-else>
         <SingleBracket
           :participants="data.participants"
-          :highlight-team="highlightTeam"
           :matches-by-id="matches.matchesById"
           :matches-by-round="
             splitBy(matches.matchesByGroup[0]!, 'round_id').map((matches) =>
@@ -124,7 +117,6 @@ const matches = computed(() => {
           bracket-type="winner_bracket"
           :connect-final="true"
           @match-clicked="(m) => emit('matchClicked', m)"
-          @hover="(team) => emit('hover', team)"
         >
           <div
             v-for="(match, matchIndex) in matches.matchesByGroup[2]!"
@@ -134,7 +126,6 @@ const matches = computed(() => {
             <h3>{{ matchIndex === 0 ? 'Grand Final' : 'Bracket Reset' }}</h3>
             <SingleMatch
               :participants="data.participants"
-              :highlight-team="highlightTeam"
               :match="{
                 ...match,
                 metadata: {
@@ -154,13 +145,11 @@ const matches = computed(() => {
                 },
               }"
               @match-clicked="(m) => emit('matchClicked', m)"
-              @hover="(team) => emit('hover', team)"
             />
           </div>
         </SingleBracket>
         <SingleBracket
           :participants="data.participants"
-          :highlight-team="highlightTeam"
           :matches-by-id="matches.matchesById"
           :matches-by-round="
             splitBy(matches.matchesByGroup[1]!, 'round_id').map((matches) =>
@@ -178,7 +167,6 @@ const matches = computed(() => {
           bracket-type="loser_bracket"
           :connect-final="false"
           @match-clicked="(m) => emit('matchClicked', m)"
-          @hover="(team) => emit('hover', team)"
         />
       </template>
     </div>

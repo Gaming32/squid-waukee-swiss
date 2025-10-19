@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { MatchWithMetadata, OriginHint, Side } from '@/brackets-viewer/types'
+import type { OriginHint, Side } from '@/brackets-viewer/types'
+import { useHighlightedTeam } from '@/composables/highlightedTeam'
 import type { GroupType, Participant, ParticipantResult } from 'brackets-model'
 import { computed, useTemplateRef } from 'vue'
 
 const props = defineProps<{
   participants: Participant[]
-  highlightTeam?: string
   participant: ParticipantResult | null
   bye?: boolean
   side?: Side
@@ -14,10 +14,7 @@ const props = defineProps<{
   roundNumber?: number
 }>()
 
-const emit = defineEmits<{
-  (e: 'matchClicked', match: MatchWithMetadata): void
-  (e: 'hover', team?: string): void
-}>()
+const highlightedTeam = useHighlightedTeam()
 
 const rootElement = useTemplateRef('rootElement')
 
@@ -31,15 +28,15 @@ const eventHandlers = computed(() => {
   }
   const participantId = props.participant.id.toString()
   return {
-    mouseenter: () => emit('hover', participantId),
-    mouseleave: () => emit('hover'),
+    mouseenter: () => (highlightedTeam.value = participantId),
+    mouseleave: () => (highlightedTeam.value = undefined),
     touchstart: (e: TouchEvent) => {
       e.preventDefault()
-      emit('hover', participantId)
+      highlightedTeam.value = participantId
     },
     touchend: (e: TouchEvent) => {
       e.preventDefault()
-      emit('hover')
+      highlightedTeam.value = undefined
       rootElement.value!.click()
     },
   }
@@ -79,7 +76,7 @@ const originHint = computed(() => props.originHint?.(props.side === 'opponent1' 
     ref="rootElement"
     :class="{
       participant: true,
-      hover: participant && highlightTeam === participant.id,
+      hover: participant && highlightedTeam === participant.id,
       win: participant?.result === 'win',
       loss: participant?.result === 'loss',
     }"

@@ -6,6 +6,7 @@ import type { ViewerData } from '@/brackets-viewer/types'
 import BracketViewer from '@/brackets-viewer/BracketViewer.vue'
 import type { StandingsValues } from 'tournament-organizer/interfaces'
 import { computeSimpleRoundCount } from '@/format'
+import { useHighlightedTeam } from '@/composables/highlightedTeam'
 
 export type StageInfo =
   | {
@@ -28,16 +29,15 @@ const props = defineProps<{
   orderedTeams: string[]
   teamNames: { [id: string]: string }
   matches: Match[]
-
-  highlightedTeam?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'matchClicked', matchId: string): void
-  (e: 'hover', team?: string): void
   (e: 'dropTeam', teamId: string): void
   (e: 'nextRound'): void
 }>()
+
+const highlightedTeam = useHighlightedTeam()
 
 const bracketRendererParticipants = computed<ViewerData['participants']>(() =>
   Object.entries(props.teamNames).map((team) => {
@@ -127,9 +127,7 @@ const hasDrops = computed(
     <BracketViewer
       v-if="bracketRendererMatches.length"
       :data="bracketRendererBrackets"
-      :highlight-team="highlightedTeam"
       @match-clicked="(match) => emit('matchClicked', match.id.toString())"
-      @hover="(team) => emit('hover', team)"
     />
 
     <template v-if="stageInfo.type === 'swiss'">
@@ -156,10 +154,10 @@ const hasDrops = computed(
               v-for="(team, rank) in stageInfo.standings"
               :key="team.player.getId()"
               :class="{ 'hovered-row': team.player.getId() === highlightedTeam }"
-              @mouseenter="() => emit('hover', team.player.getId())"
-              @mouseleave="() => emit('hover')"
-              @touchstart="() => emit('hover', team.player.getId())"
-              @touchend="() => emit('hover')"
+              @mouseenter="() => (highlightedTeam = team.player.getId())"
+              @mouseleave="() => (highlightedTeam = undefined)"
+              @touchstart="() => (highlightedTeam = team.player.getId())"
+              @touchend="() => (highlightedTeam = undefined)"
             >
               <td class="right-aligned">{{ rank + 1 }}.</td>
               <td>{{ team.player.getName() }}</td>

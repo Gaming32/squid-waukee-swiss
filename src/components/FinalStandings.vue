@@ -2,6 +2,7 @@
 import type { Match, Player } from 'tournament-organizer/components'
 import { isEmpty } from 'lodash'
 import { computed } from 'vue'
+import { useHighlightedTeam } from '@/composables/highlightedTeam'
 
 const PLACEMENT_EMOJIS = ['🥇', '🥈', '🥉']
 
@@ -9,13 +10,9 @@ const props = defineProps<{
   finalStandings: { [standing: number]: Player[] }
   completedMatchesPerTeam: { [team: string]: Match[] }
   stageRoundCutoffs: number[][]
-
-  highlightedTeam?: string
 }>()
 
-const emit = defineEmits<{
-  (e: 'hover', team?: string): void
-}>()
+const highlightedTeam = useHighlightedTeam()
 
 const stageSections = computed(() =>
   props.stageRoundCutoffs.map(
@@ -46,20 +43,20 @@ const stageSections = computed(() =>
               'colored-standings-row': rankIndex % 2 === 0,
               'hovered-row': team.getId() === highlightedTeam,
             }"
-            @mouseenter="() => emit('hover', team.getId())"
-            @mouseleave="() => emit('hover')"
-            @touchstart="() => emit('hover', team.getId())"
-            @touchend="() => emit('hover')"
+            @mouseenter="() => (highlightedTeam = team.getId())"
+            @mouseleave="() => (highlightedTeam = undefined)"
+            @touchstart="() => (highlightedTeam = team.getId())"
+            @touchend="() => (highlightedTeam = undefined)"
           >
             <td class="right-aligned">
               {{ teamIndex === 0 ? `${PLACEMENT_EMOJIS[rank - 1] ?? ''}&nbsp;${rank}.` : '' }}
             </td>
             <td>{{ team.getName() }}</td>
             <td class="matches-list-column">
-              <template v-for="predicate in stageSections">
+              <template v-for="(predicate, predicateIndex) in stageSections">
                 <div
                   v-if="completedMatchesPerTeam[team.getId()]?.some(predicate)"
-                  :key="predicate.toString()"
+                  :key="predicateIndex"
                   class="stage"
                 >
                   <div

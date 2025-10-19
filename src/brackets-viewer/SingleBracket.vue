@@ -8,7 +8,6 @@ import { getBracketConnection } from '@/brackets-viewer/dom'
 
 const props = defineProps<{
   participants: Participant[]
-  highlightTeam?: string
   matchesById: { [id: string]: MatchWithMetadata }
   matchesByRound: MatchWithMetadata[][]
   getRoundName: (roundNumber: number, roundCount: number) => string
@@ -18,7 +17,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'matchClicked', match: MatchWithMetadata): void
-  (e: 'hover', team?: string): void
 }>()
 
 const bracketName = computed(() => {
@@ -117,10 +115,8 @@ function computeMetadata(match: MatchWithMetadata, roundNumber: number): MatchWi
           <SingleMatch
             v-if="match"
             :participants="participants"
-            :highlight-team="highlightTeam"
             :match="computeMetadata(match, roundIndex + 1)"
             @match-clicked="(m) => emit('matchClicked', m)"
-            @hover="(team) => emit('hover', team)"
           />
           <div v-else class="match hidden-match">
             <div class="opponents">

@@ -134,8 +134,6 @@ const stageRoundCutoffs = computed(() => {
   }
 })
 
-const highlightedTeam = ref<string>()
-
 if (storageAvailable('localStorage')) {
   const TOURNAMENT_KEY = 'tournament'
   const TOURNAMENT_FORMAT_KEY = 'tournament-format'
@@ -285,10 +283,6 @@ function reportScore(matchId: string) {
   )
 }
 
-function hover(team?: string) {
-  highlightedTeam.value = team
-}
-
 function dropTeam(teamId: string) {
   const team = tournament.value?.getPlayer(teamId)
   if (!team) return
@@ -354,9 +348,7 @@ function nextRound() {
             :ordered-teams="[]"
             :team-names="teamNames"
             :matches="tournamentMatches.filter((m) => m.getRoundNumber() <= swissRoundCount)"
-            :highlighted-team="highlightedTeam"
             @match-clicked="reportScore"
-            @hover="hover"
             @drop-team="dropTeam"
             @next-round="nextRound"
           />
@@ -368,9 +360,7 @@ function nextRound() {
             :ordered-teams="swissStandings.map((s) => s.player.getId())"
             :team-names="teamNames"
             :matches="tournamentMatches.filter((m) => m.getRoundNumber() > swissRoundCount)"
-            :highlighted-team="highlightedTeam"
             @match-clicked="reportScore"
-            @hover="hover"
           />
         </template>
         <TournamentStage
@@ -382,9 +372,7 @@ function nextRound() {
           :ordered-teams="[]"
           :team-names="teamNames"
           :matches="tournamentMatches"
-          :highlighted-team="highlightedTeam"
           @match-clicked="reportScore"
-          @hover="hover"
         />
 
         <div v-if="currentRoundsMapData.length" class="print-hide">
@@ -405,8 +393,6 @@ function nextRound() {
           :final-standings="finalStandings"
           :completed-matches-per-team="completedMatchesPerTeam"
           :stage-round-cutoffs="stageRoundCutoffs"
-          :highlighted-team="highlightedTeam"
-          @hover="hover"
         />
       </div>
     </template>
