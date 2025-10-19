@@ -142,7 +142,7 @@ const hasDrops = computed(
               <th class="right-aligned">Rank</th>
               <th>Team</th>
               <th>W/L</th>
-              <th>H2H</th>
+              <th>TB</th>
               <th>OW%</th>
               <th>W/L (M)</th>
               <th>OW% (M)</th>
@@ -162,7 +162,7 @@ const hasDrops = computed(
               <td class="right-aligned">{{ rank + 1 }}.</td>
               <td>{{ team.player.getName() }}</td>
               <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
-              <td>{{ team.tiebreaks.neighboringPoints }}</td>
+              <td>{{ team.tiebreaks.neighboringRecord }}</td>
               <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
               <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
               <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
