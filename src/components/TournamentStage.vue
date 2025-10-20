@@ -1,19 +1,24 @@
 <script setup lang="ts">
-import type { AdditionalStandingsValues } from '@/tournament'
 import type { Match } from 'tournament-organizer/components'
 import { Status } from 'brackets-model'
 import { computed } from 'vue'
-import type { ViewerData } from '@/brackets-viewer'
-import BracketViewer from '@/brackets-viewer-vue/BracketViewer.vue'
+import type { ViewerData } from '@/brackets-viewer/types'
+import BracketViewer from '@/brackets-viewer/BracketViewer.vue'
+import type { StandingsValues } from 'tournament-organizer/interfaces'
+import { computeSimpleRoundCount } from '@/format'
+import { useHighlightedTeam } from '@/composables/highlightedTeam'
 
 export type StageInfo =
   | {
       type: 'swiss'
       roundCount: number
-      standings: AdditionalStandingsValues[]
+      standings: StandingsValues[]
     }
   | {
       type: 'single_elimination'
+    }
+  | {
+      type: 'double_elimination'
     }
 
 const props = defineProps<{
@@ -24,16 +29,15 @@ const props = defineProps<{
   orderedTeams: string[]
   teamNames: { [id: string]: string }
   matches: Match[]
-
-  highlightedTeam?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'matchClicked', matchId: string): void
-  (e: 'hover', team?: string): void
   (e: 'dropTeam', teamId: string): void
   (e: 'nextRound'): void
 }>()
+
+const highlightedTeam = useHighlightedTeam()
 
 const bracketRendererParticipants = computed<ViewerData['participants']>(() =>
   Object.entries(props.teamNames).map((team) => {
@@ -45,7 +49,7 @@ const bracketRendererParticipants = computed<ViewerData['participants']>(() =>
   }),
 )
 const bracketRendererMatches = computed<ViewerData['matches']>(() => {
-  return props.matches.map((match) => {
+  return props.matches.map<ViewerData['matches'][0]>((match) => {
     function getOpponent(team: Match['player1']): ViewerData['matches'][0]['opponent1'] {
       if (!team.id) {
         return null
@@ -53,29 +57,37 @@ const bracketRendererMatches = computed<ViewerData['matches']>(() => {
       const teamIndex = props.orderedTeams.findIndex((t) => t === team.id)
       return {
         id: team.id,
-        score: status === Status.Completed ? team.win : undefined,
+        score: match.hasEnded() ? team.win : undefined,
         position: teamIndex >= 0 ? teamIndex + 1 : undefined,
-        result: status !== Status.Completed ? undefined : team.win > team.loss ? 'win' : 'loss',
+        result: !match.hasEnded() ? undefined : team.win > team.loss ? 'win' : 'loss',
       }
     }
-    const status =
-      !match.player1.id || !match.player2.id
-        ? Status.Ready
-        : match.active
-          ? Status.Running
-          : Status.Completed
+    let groupId = 0
+    let number = match.getMatchNumber()
+    if (props.stageInfo.type === 'double_elimination') {
+      const winnersRoundCount = computeSimpleRoundCount(Object.values(props.teamNames).length)
+      if (match.getRoundNumber() > winnersRoundCount) {
+        if (match.getRoundNumber() === winnersRoundCount + 1) {
+          groupId = 2
+          number = 1
+        } else {
+          groupId = 1
+        }
+      }
+    }
     return {
-      id: match.id,
+      id: match.getId(),
       stage_id: 0,
-      group_id: 0,
-      round_id: match.round,
-      number: match.match,
-      child_count: match.meta.bestOf,
-      status,
-      opponent1: getOpponent(match.player1),
-      opponent2: getOpponent(match.player2),
-      winDestination: match.path.win,
-      bye: match.bye,
+      group_id: groupId,
+      round_id: match.getRoundNumber(),
+      number,
+      child_count: match.getMeta().bestOf,
+      status: Status.Locked, // Unused
+      opponent1: getOpponent(match.getPlayer1()),
+      opponent2: getOpponent(match.getPlayer2()),
+      winDestination: match.getPath().win,
+      loseDestination: match.getPath().loss,
+      bye: match.isBye(),
     }
   })
 })
@@ -85,7 +97,7 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
       id: 0,
       tournament_id: '',
       name: '',
-      type: props.stageInfo.type === 'swiss' ? 'round_robin' : 'single_elimination',
+      type: props.stageInfo.type === 'swiss' ? 'round_robin' : props.stageInfo.type,
       settings: {},
       number: 0,
     },
@@ -95,16 +107,16 @@ const bracketRendererBrackets = computed<ViewerData>(() => {
   }
 })
 
-const anyMatchesActive = computed(() => props.matches.some((m) => m.active))
+const anyMatchesActive = computed(() => props.matches.some((m) => m.isActive()))
 const finalSwissRound = computed(
   () =>
     props.stageInfo.type === 'swiss' &&
-    Math.max(...props.matches.map((m) => m.round)) === props.stageInfo.roundCount,
+    Math.max(...props.matches.map((m) => m.getRoundNumber())) === props.stageInfo.roundCount,
 )
 const hasDrops = computed(
   () =>
     props.stageInfo.type === 'swiss' &&
-    props.stageInfo.standings.some((team) => team.player.meta.dropped),
+    props.stageInfo.standings.some((team) => team.player.getMeta().dropped),
 )
 </script>
 
@@ -112,19 +124,10 @@ const hasDrops = computed(
   <div class="stage-root">
     <h2 v-if="title" class="low-margin-title">{{ title }}</h2>
 
-    <!-- <BracketRenderer
-      v-if="bracketRendererMatches.length"
-      :brackets="bracketRendererBrackets"
-      :highlight-team="highlightedTeam"
-      @match-clicked="(matchId) => emit('matchClicked', matchId.toString())"
-      @hover="(team) => emit('hover', team)"
-    /> -->
     <BracketViewer
       v-if="bracketRendererMatches.length"
       :data="bracketRendererBrackets"
-      :highlight-team="highlightedTeam"
       @match-clicked="(match) => emit('matchClicked', match.id.toString())"
-      @hover="(team) => emit('hover', team)"
     />
 
     <template v-if="stageInfo.type === 'swiss'">
@@ -139,33 +142,33 @@ const hasDrops = computed(
               <th class="right-aligned">Rank</th>
               <th>Team</th>
               <th>W/L</th>
-              <th>TB</th>
-              <th>OW%</th>
+              <th title="Matches against tied opponents">TB</th>
+              <th title="Opponent win percentage">OW%</th>
               <th>W/L (M)</th>
-              <th>OW% (M)</th>
+              <th title="Opponent match win percentage">OW% (M)</th>
               <th v-if="stageActive || hasDrops">Drop</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="(team, rank) in stageInfo.standings"
-              :key="team.player.id"
-              :class="{ 'hovered-row': team.player.id === highlightedTeam }"
-              @mouseenter="() => emit('hover', team.player.id)"
-              @mouseleave="() => emit('hover')"
-              @touchstart="() => emit('hover', team.player.id)"
-              @touchend="() => emit('hover')"
+              :key="team.player.getId()"
+              :class="{ 'hovered-row': team.player.getId() === highlightedTeam }"
+              @mouseenter="() => (highlightedTeam = team.player.getId())"
+              @mouseleave="() => (highlightedTeam = undefined)"
+              @touchstart="() => (highlightedTeam = team.player.getId())"
+              @touchend="() => (highlightedTeam = undefined)"
             >
               <td class="right-aligned">{{ rank + 1 }}.</td>
-              <td>{{ team.player.name }}</td>
+              <td>{{ team.player.getName() }}</td>
               <td>{{ team.matchPoints }}/{{ team.matches - team.matchPoints }}</td>
-              <td>{{ -team.lossesAgainstTiedScore }}</td>
+              <td>{{ team.tiebreaks.neighborhoodRecord }}</td>
               <td>{{ (team.tiebreaks.oppMatchWinPct * 100).toFixed(2) }}</td>
               <td>{{ team.gamePoints }}/{{ team.games - team.gamePoints }}</td>
               <td>{{ (team.tiebreaks.oppGameWinPct * 100).toFixed(2) }}</td>
-              <td v-if="team.player.meta.dropped">Dropped</td>
+              <td v-if="team.player.getMeta().dropped">Dropped</td>
               <td v-else-if="stageActive">
-                <a class="icon-button" @click="() => emit('dropTeam', team.player.id)"> ❌ </a>
+                <a class="icon-button" @click="() => emit('dropTeam', team.player.getId())"> ❌ </a>
               </td>
               <td v-else-if="hasDrops"></td>
             </tr>

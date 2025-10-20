@@ -1,28 +1,25 @@
 <script setup lang="ts">
 import type { Match, Player } from 'tournament-organizer/components'
-import { PLACEMENT_EMOJIS, isPlayerWinning } from '@/tournament'
 import { isEmpty } from 'lodash'
 import { computed } from 'vue'
+import { useHighlightedTeam } from '@/composables/highlightedTeam'
+
+const PLACEMENT_EMOJIS = ['🥇', '🥈', '🥉']
 
 const props = defineProps<{
   finalStandings: { [standing: number]: Player[] }
   completedMatchesPerTeam: { [team: string]: Match[] }
-  stageRoundCutoff?: number
-
-  highlightedTeam?: string
+  stageRoundCutoffs: number[][]
 }>()
 
-const emit = defineEmits<{
-  (e: 'hover', team?: string): void
-}>()
+const highlightedTeam = useHighlightedTeam()
 
 const stageSections = computed(() =>
-  props.stageRoundCutoff !== undefined
-    ? [
-        (match: Match) => match.round < props.stageRoundCutoff!,
-        (match: Match) => match.round >= props.stageRoundCutoff!,
-      ]
-    : [() => true],
+  props.stageRoundCutoffs.map(
+    ([first, last]) =>
+      (match: Match) =>
+        match.getRoundNumber() >= first! && match.getRoundNumber() <= last!,
+  ),
 )
 </script>
 
@@ -41,38 +38,38 @@ const stageSections = computed(() =>
         <template v-for="(teams, rank, rankIndex) in finalStandings" :key="rank">
           <tr
             v-for="(team, teamIndex) in teams"
-            :key="team.id"
+            :key="team.getId()"
             :class="{
               'colored-standings-row': rankIndex % 2 === 0,
-              'hovered-row': team.id === highlightedTeam,
+              'hovered-row': team.getId() === highlightedTeam,
             }"
-            @mouseenter="() => emit('hover', team.id)"
-            @mouseleave="() => emit('hover')"
-            @touchstart="() => emit('hover', team.id)"
-            @touchend="() => emit('hover')"
+            @mouseenter="() => (highlightedTeam = team.getId())"
+            @mouseleave="() => (highlightedTeam = undefined)"
+            @touchstart="() => (highlightedTeam = team.getId())"
+            @touchend="() => (highlightedTeam = undefined)"
           >
             <td class="right-aligned">
               {{ teamIndex === 0 ? `${PLACEMENT_EMOJIS[rank - 1] ?? ''}&nbsp;${rank}.` : '' }}
             </td>
-            <td>{{ team.name }}</td>
+            <td>{{ team.getName() }}</td>
             <td class="matches-list-column">
-              <template v-for="predicate in stageSections">
+              <template v-for="(predicate, predicateIndex) in stageSections">
                 <div
-                  v-if="completedMatchesPerTeam[team.id]?.some(predicate)"
-                  :key="predicate.toString()"
+                  v-if="completedMatchesPerTeam[team.getId()]?.some(predicate)"
+                  :key="predicateIndex"
                   class="stage"
                 >
                   <div
-                    v-for="match in completedMatchesPerTeam[team.id]?.filter(predicate)"
-                    :key="match.id"
+                    v-for="match in completedMatchesPerTeam[team.getId()]?.filter(predicate)"
+                    :key="match.getId()"
                     :class="{
                       match: true,
-                      bye: match.bye,
-                      win: !match.bye && isPlayerWinning(match, team.id),
-                      loss: !match.bye && !isPlayerWinning(match, team.id),
+                      bye: match.isBye(),
+                      win: !match.isBye() && match.getWinner()?.id === team.getId(),
+                      loss: !match.isBye() && match.getWinner()?.id !== team.getId(),
                     }"
                   >
-                    {{ match.bye ? 'B' : isPlayerWinning(match, team.id) ? 'W' : 'L' }}
+                    {{ match.isBye() ? 'B' : match.getWinner()?.id === team.getId() ? 'W' : 'L' }}
                   </div>
                 </div>
               </template>

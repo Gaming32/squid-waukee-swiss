@@ -7,18 +7,20 @@ import type { Participant } from 'brackets-model'
 
 const props = defineProps<{
   participants: Participant[]
-  highlightTeam?: string
   match: MatchWithMetadata
 }>()
 
 const emit = defineEmits<{
   (e: 'matchClicked', match: MatchWithMetadata): void
-  (e: 'hover', team?: string): void
 }>()
 
 const matchWrapperClasses = computed(() => {
   const matchMetadata = props.match.metadata
-  if (!matchMetadata.connection || matchMetadata.childOriginMatches !== 1) {
+  if (
+    !matchMetadata.connection ||
+    matchMetadata.childOriginMatches !== 1 ||
+    (matchMetadata.roundNumber! % 2 !== 0 && matchMetadata.matchLocation === 'loser_bracket')
+  ) {
     return {}
   }
   return {
@@ -47,35 +49,25 @@ const participantConnectionClasses = computed(() => {
 
 <template>
   <MaybeClassWrapper :classes="matchWrapperClasses">
-    <div
-      :class="matchConnectionClasses"
-      :data-match-id="match.id"
-      :data-match-status="match.status"
-    >
+    <div :class="matchConnectionClasses">
       <div :class="participantConnectionClasses" @click="emit('matchClicked', match)">
         <MatchParticipant
           :participants="participants"
-          :highlight-team="highlightTeam"
           :participant="match.opponent1"
           :bye="match.bye"
           side="opponent1"
           :origin-hint="match.metadata.originHint"
           :match-location="match.metadata.matchLocation"
           :round-number="match.metadata.roundNumber"
-          @match-clicked="(m) => emit('matchClicked', m)"
-          @hover="(team) => emit('hover', team)"
         />
         <MatchParticipant
           :participants="participants"
-          :highlight-team="highlightTeam"
           :participant="match.opponent2"
           :bye="match.bye"
           side="opponent2"
           :origin-hint="match.metadata.originHint"
           :match-location="match.metadata.matchLocation"
           :round-number="match.metadata.roundNumber"
-          @match-clicked="(m) => emit('matchClicked', m)"
-          @hover="(team) => emit('hover', team)"
         />
         <span v-if="match.child_count > 0" @click="emit('matchClicked', match)">{{
           match.metadata.label

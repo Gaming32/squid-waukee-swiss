@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { MatchWithMetadata, OriginHint, Side } from '@/brackets-viewer/types'
+import type { OriginHint, Side } from '@/brackets-viewer/types'
+import { useHighlightedTeam } from '@/composables/highlightedTeam'
 import type { GroupType, Participant, ParticipantResult } from 'brackets-model'
 import { computed, useTemplateRef } from 'vue'
 
 const props = defineProps<{
   participants: Participant[]
-  highlightTeam?: string
   participant: ParticipantResult | null
   bye?: boolean
   side?: Side
@@ -14,10 +14,7 @@ const props = defineProps<{
   roundNumber?: number
 }>()
 
-const emit = defineEmits<{
-  (e: 'matchClicked', match: MatchWithMetadata): void
-  (e: 'hover', team?: string): void
-}>()
+const highlightedTeam = useHighlightedTeam()
 
 const rootElement = useTemplateRef('rootElement')
 
@@ -31,15 +28,15 @@ const eventHandlers = computed(() => {
   }
   const participantId = props.participant.id.toString()
   return {
-    mouseenter: () => emit('hover', participantId),
-    mouseleave: () => emit('hover'),
+    mouseenter: () => (highlightedTeam.value = participantId),
+    mouseleave: () => (highlightedTeam.value = undefined),
     touchstart: (e: TouchEvent) => {
       e.preventDefault()
-      emit('hover', participantId)
+      highlightedTeam.value = participantId
     },
     touchend: (e: TouchEvent) => {
       e.preventDefault()
-      emit('hover')
+      highlightedTeam.value = undefined
       rootElement.value!.click()
     },
   }
@@ -70,6 +67,8 @@ const originAbbreviation = computed(() => {
 
   return `${prefix}${props.participant.position}`
 })
+
+const originHint = computed(() => props.originHint?.(props.side === 'opponent1' ? 0 : 1))
 </script>
 
 <template>
@@ -77,27 +76,26 @@ const originAbbreviation = computed(() => {
     ref="rootElement"
     :class="{
       participant: true,
-      hover: participant && highlightTeam === participant.id,
+      hover: participant && highlightedTeam === participant.id,
       win: participant?.result === 'win',
       loss: participant?.result === 'loss',
     }"
-    :data-participant-id="participant?.id"
     v-on="eventHandlers"
   >
     <template v-if="participant">
-      <div class="name" v-if="realParticipant" :title="realParticipant.name">
+      <div v-if="realParticipant" class="name" :title="realParticipant.name">
         <span v-if="originAbbreviation">{{ originAbbreviation }}</span>
         {{ realParticipant.name }}
       </div>
-      <div class="name hint" v-else>{{ originHint?.(side === 'opponent1' ? -2 : -1) }}</div>
+      <div v-else class="name hint" :title="originHint">{{ originHint }}</div>
       <div class="result">
         {{ participant.score === undefined ? '-' : participant.score }}
       </div>
     </template>
     <template v-else>
       <div v-if="bye" class="name bye">BYE</div>
-      <div v-else class="name hint">
-        {{ originHint?.(side === 'opponent1' ? -2 : -1) }}
+      <div v-else class="name hint" :title="originHint">
+        {{ originHint }}
       </div>
       <div class="result"></div>
     </template>
