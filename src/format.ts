@@ -239,7 +239,7 @@ export function computeFinalStandings(
   for (const standing of swissStandings.slice(currentRank - 1)) {
     if (
       previousStanding !== null &&
-      tournament['sortForStandings'](standing, previousStanding, firstEliminationRound - 1) > 0
+      tournament.sortForStandings(standing, previousStanding, firstEliminationRound - 1) > 0
     ) {
       currentRank++
     }
