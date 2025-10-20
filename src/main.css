@@ -50,3 +50,14 @@ button:disabled {
 .hovered-row {
   background-color: var(--wa-color-fill-quiet);
 }
+
+@media (not (scripting: enabled)) and (prefers-color-scheme: dark) {
+  html:not(.wa-dark) {
+    color-scheme: dark;
+    background-color: black;
+
+    body {
+      color: white;
+    }
+  }
+}
