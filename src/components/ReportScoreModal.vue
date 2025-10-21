@@ -22,7 +22,7 @@ let callback: Callback = () => {}
 function submit() {
   if (!canSubmit.value) return
   dialogRoot.value?.close()
-  callback({ score1: score1.value, score2: score2.value })
+  callback({ score1: +score1.value, score2: +score2.value })
 }
 
 function cancel() {
