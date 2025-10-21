@@ -53,9 +53,12 @@ export function computeSimpleRoundCount(players: number) {
 }
 
 export function computeLosersRoundCount(players: number) {
-  // Why is it so complicated 🫠
-  const exponent = Math.floor(Math.log2(players))
-  return Math.ceil(2 ** (1 - exponent) * (players % 2 ** exponent)) + 2 * exponent - 2
+  if (players < 3) {
+    return 0
+  }
+  const n = players - 1
+  // OEIS A126236
+  return Math.floor(Math.log2(n)) + Math.floor(Math.log2((2 * n) / 3))
 }
 
 function createRound(name: string, bestOf: number): Round {
