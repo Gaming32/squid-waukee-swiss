@@ -395,7 +395,7 @@ function nextRound() {
 
         <div v-if="currentRoundsMapData.length" class="print-hide">
           <template v-for="data in currentRoundsMapData" :key="data.name">
-            <h3>{{ data.name }} Map Pool</h3>
+            <h3>{{ data.name }} Map List</h3>
             <ul>
               <li v-for="mapMode in data.games" :key="Object.values(mapMode).toString()">
                 {{
