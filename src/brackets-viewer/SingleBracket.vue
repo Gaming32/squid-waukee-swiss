@@ -4,7 +4,6 @@ import type { GroupType, Participant } from 'brackets-model'
 import { computed } from 'vue'
 import MatchParticipant from './MatchParticipant.vue'
 import SingleMatch from './SingleMatch.vue'
-import { getBracketConnection } from '@/brackets-viewer/dom'
 
 const props = defineProps<{
   participants: Participant[]
@@ -75,31 +74,46 @@ function getOriginHint(matchLocation: GroupType, origins: MatchWithMetadata[]): 
 function computeMetadata(match: MatchWithMetadata, roundNumber: number): MatchWithMetadata {
   const roundCount = props.matchesByRound.length
   const winDestination = props.matchesById[match.winDestination ?? '']
-  const childOriginMatches = winDestination?.metadata?.origins?.length ?? null
   const matchLocation = props.bracketType
   const connectFinal = props.connectFinal
   return {
     ...match,
     metadata: {
       ...match.metadata,
-      childOriginMatches,
+      childOriginMatches: winDestination?.metadata?.origins?.length ?? 0,
       childSiblingOriginMatches:
         props.matchesById[winDestination?.metadata?.sibling ?? '']?.metadata?.origins?.length ??
         null,
       matchLocation,
       connectFinal,
-      connection: getBracketConnection(
-        roundNumber,
-        roundCount,
-        match.metadata.origins!.length,
-        childOriginMatches,
-        matchLocation,
-        connectFinal,
-      ),
+      connection: {
+        connectPrevious: getSingleConnection(match),
+        connectNext:
+          roundNumber === roundCount && connectFinal
+            ? 'straight'
+            : getSingleConnection(winDestination),
+      },
       label: getMatchLabel(match.number, roundNumber, roundCount, matchLocation),
       originHint: getOriginHint(matchLocation, match.metadata.origins!),
     },
   }
+}
+
+function getSingleConnection(match?: MatchWithMetadata) {
+  if (!match) {
+    return
+  }
+  const origins =
+    match.metadata.origins?.filter(
+      (o) => o.metadata.matchLocation === match.metadata.matchLocation,
+    ) ?? []
+  if (origins.length > 1) {
+    return 'square'
+  }
+  if (origins.length === 1) {
+    return 'straight'
+  }
+  return false
 }
 </script>
 

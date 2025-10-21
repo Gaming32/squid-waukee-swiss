@@ -5,7 +5,6 @@ import { computed } from 'vue'
 import RoundRobinGroupMatches from './RoundRobinGroupMatches.vue'
 import SingleBracket from './SingleBracket.vue'
 import SingleMatch from './SingleMatch.vue'
-import { getFinalConnection } from '@/brackets-viewer/dom'
 import type { GroupType } from 'brackets-model'
 
 const props = defineProps<{
@@ -56,6 +55,8 @@ const matches = computed(() => {
   })
   return { matchesById, matchesByGroup }
 })
+
+const grandFinalRoundCount = computed(() => matches.value.matchesByGroup[2]?.length ?? 0)
 </script>
 
 <template>
@@ -131,16 +132,12 @@ const matches = computed(() => {
                 metadata: {
                   ...match.metadata,
                   roundNumber: matchIndex + 1,
-                  roundCount: matches.matchesByGroup[2]!.length,
-                  connection: getFinalConnection(
-                    'grand_final',
-                    matchIndex + 1,
-                    matches.matchesByGroup[2]!.length,
-                  ),
-                  label:
-                    matches.matchesByGroup[2]!.length > 1
-                      ? `Grand Final ${matchIndex + 1}`
-                      : 'Grand Final',
+                  roundCount: grandFinalRoundCount,
+                  connection: {
+                    connectPrevious: 'straight',
+                    connectNext: matchIndex + 1 < grandFinalRoundCount && 'straight',
+                  },
+                  label: grandFinalRoundCount > 1 ? `Grand Final ${matchIndex + 1}` : 'Grand Final',
                   originHint: (position) => ['Winner of WB Final', 'Winner of LB Final'][position]!,
                 },
               }"
