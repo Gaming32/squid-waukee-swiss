@@ -2,7 +2,6 @@
 import type { MatchWithMetadata, OriginHint } from '@/brackets-viewer/types'
 import type { GroupType, Participant } from 'brackets-model'
 import { computed } from 'vue'
-import MatchParticipant from './MatchParticipant.vue'
 import SingleMatch from './SingleMatch.vue'
 
 const props = defineProps<{
@@ -127,17 +126,10 @@ function getSingleConnection(match?: MatchWithMetadata) {
         </h3>
         <template v-for="match in round" :key="match.id">
           <SingleMatch
-            v-if="match"
             :participants="participants"
             :match="computeMetadata(match, roundIndex + 1)"
             @match-clicked="(m) => emit('matchClicked', m)"
           />
-          <div v-else class="match hidden-match">
-            <div class="opponents">
-              <MatchParticipant :participants="participants" :participant="null" />
-              <MatchParticipant :participants="participants" :participant="null" />
-            </div>
-          </div>
         </template>
       </div>
       <slot></slot>

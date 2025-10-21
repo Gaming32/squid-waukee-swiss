@@ -16,17 +16,13 @@ const emit = defineEmits<{
 
 const matchWrapperClasses = computed(() => {
   const matchMetadata = props.match.metadata
-  if (
-    !matchMetadata.connection ||
-    matchMetadata.childOriginMatches !== 1 ||
-    (matchMetadata.roundNumber! % 2 !== 0 && matchMetadata.matchLocation === 'loser_bracket')
-  ) {
+  if (!matchMetadata.connection || matchMetadata.childOriginMatches !== 1) {
     return {}
   }
   return {
     'bye-match-wrapper': true,
-    'tall-wrapper': !!matchMetadata.childSiblingOriginMatches,
-    'short-wrapper': !matchMetadata.childSiblingOriginMatches,
+    'tall-wrapper':
+      !!matchMetadata.childSiblingOriginMatches || matchMetadata.childSiblingOriginMatches === null,
   }
 })
 const matchConnectionClasses = computed(() => {
