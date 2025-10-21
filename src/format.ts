@@ -52,8 +52,10 @@ export function computeSimpleRoundCount(players: number) {
   return Math.ceil(Math.log2(players))
 }
 
-export function computeLosersRoundCount(winnersRoundCount: number) {
-  return 2 * (winnersRoundCount - 1)
+export function computeLosersRoundCount(players: number) {
+  // Why is it so complicated 🫠
+  const exponent = Math.floor(Math.log2(players))
+  return Math.ceil(2 ** (1 - exponent) * (players % 2 ** exponent)) + 2 * exponent - 2
 }
 
 function createRound(name: string, bestOf: number): Round {
@@ -109,9 +111,8 @@ export function createRounds(players: number, format: TournamentFormat) {
     case 'single_elimination':
       return createElimRounds(players, format.bestOf, format.finalsBestOf, format.finalsBestOf)
     case 'double_elimination': {
-      const winnersRoundCount = computeSimpleRoundCount(players)
       const winnersRounds = createElimRounds(
-        winnersRoundCount,
+        computeSimpleRoundCount(players),
         format.bestOf,
         format.bestOf,
         format.finalsBestOf,
@@ -120,7 +121,7 @@ export function createRounds(players: number, format: TournamentFormat) {
         'Winners Finals',
       )
       const losersRounds = createElimRounds(
-        computeLosersRoundCount(winnersRoundCount),
+        computeLosersRoundCount(players),
         format.bestOf,
         format.bestOf,
         format.finalsBestOf,

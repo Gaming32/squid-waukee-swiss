@@ -216,7 +216,7 @@ function createTournament(format: TournamentFormat, mapPool: MapPool, teams: str
   } else if (format.type === 'double_elimination') {
     const winnersFinalsRound = computeSimpleRoundCount(teams.length)
     const grandFinalRound = winnersFinalsRound + 1
-    const losersFinalsRound = grandFinalRound + computeLosersRoundCount(winnersFinalsRound)
+    const losersFinalsRound = grandFinalRound + computeLosersRoundCount(teams.length)
     for (const match of newTournament.getMatches()) {
       if (
         match.getRoundNumber() === winnersFinalsRound ||
