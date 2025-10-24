@@ -24,7 +24,7 @@ import {
   type TournamentFormat,
 } from './format'
 import type { Tournament } from 'tournament-organizer/components'
-import type { MapData } from './maps'
+import type { MapData, TournamentSetupData } from './tournament'
 
 useDark({
   valueDark: 'wa-dark',
@@ -198,17 +198,12 @@ function generateRoundsWithFormat(
   )
 }
 
-function createTournament(
-  format: TournamentFormat,
-  counterpickRoundCount: number,
-  mapPool: MapPool,
-  teams: string[],
-) {
+function createTournament(setupData: TournamentSetupData) {
   const newTournament = tournamentManager.createTournament('Squid-Waukee', {
     sorting: 'none',
-    ...createInitialTournamentOrganizerFormatSettings(format),
+    ...createInitialTournamentOrganizerFormatSettings(setupData.format),
   })
-  teams.forEach((team, index) => {
+  setupData.teams.forEach((team, index) => {
     const player = newTournament.createPlayer(team, index.toString())
     player.getMeta().dropped = false
   })
@@ -217,35 +212,40 @@ function createTournament(
   for (const match of newTournament.getMatches()) {
     match.getMeta().bestOf = newTournament.getScoring().bestOf
   }
-  if (format.type === 'single_elimination') {
+  if (setupData.format.type === 'single_elimination') {
     const semiFinalsRound = newTournament.getStageOne().rounds - 1
     for (const match of newTournament.getMatches()) {
       if (match.getRoundNumber() >= semiFinalsRound) {
-        match.getMeta().bestOf = format.finalsBestOf
+        match.getMeta().bestOf = setupData.format.finalsBestOf
       }
     }
-  } else if (format.type === 'double_elimination') {
-    const winnersFinalsRound = computeSimpleRoundCount(teams.length)
+  } else if (setupData.format.type === 'double_elimination') {
+    const winnersFinalsRound = computeSimpleRoundCount(setupData.teams.length)
     const grandFinalRound = winnersFinalsRound + 1
-    const losersFinalsRound = grandFinalRound + computeLosersRoundCount(teams.length)
+    const losersFinalsRound = grandFinalRound + computeLosersRoundCount(setupData.teams.length)
     for (const match of newTournament.getMatches()) {
       if (
         match.getRoundNumber() === winnersFinalsRound ||
         match.getRoundNumber() === losersFinalsRound
       ) {
-        match.getMeta().bestOf = format.finalsBestOf
+        match.getMeta().bestOf = setupData.format.finalsBestOf
       } else if (match.getRoundNumber() === grandFinalRound) {
-        match.getMeta().bestOf = format.grandFinalBestOf
+        match.getMeta().bestOf = setupData.format.grandFinalBestOf
       }
     }
   }
 
   tournament.value = newTournament
-  tournamentFormat.value = format
+  tournamentFormat.value = setupData.format
   mapData.value = {
-    mapPool,
-    rounds: generateRoundsWithFormat(teams.length, format, mapPool, counterpickRoundCount),
-    counterpickRoundCount: counterpickRoundCount,
+    mapPool: setupData.mapPool,
+    rounds: generateRoundsWithFormat(
+      setupData.teams.length,
+      setupData.format,
+      setupData.mapPool,
+      setupData.counterpickRoundCount,
+    ),
+    counterpickRoundCount: setupData.counterpickRoundCount,
   }
 }
 
@@ -355,10 +355,12 @@ function nextRound() {
 
     <SetupTourney
       v-if="tournament === null"
-      :initial-format="tournamentFormat"
-      :initial-counterpick-round-count="mapData.counterpickRoundCount"
-      :initial-map-pool="mapData.mapPool"
-      :initial-teams="initialTeams"
+      :initial-setup-data="{
+        format: tournamentFormat,
+        counterpickRoundCount: mapData.counterpickRoundCount,
+        mapPool: mapData.mapPool,
+        teams: initialTeams,
+      }"
       @finish="createTournament"
     />
     <template v-else>

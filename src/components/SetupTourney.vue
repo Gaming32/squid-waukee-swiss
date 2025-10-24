@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import type { AppContext, MapPool } from 'maps.iplabs.ink/src/types-interfaces/Interfaces'
 import {
   decodeAppContext as decodeMapsAppContext,
@@ -12,22 +12,14 @@ import {
   DEFAULT_SWISS_SETTINGS,
   type TournamentFormat,
 } from '@/format'
+import type { TournamentSetupData } from '@/tournament'
 
 const props = defineProps<{
-  initialFormat: TournamentFormat
-  initialCounterpickRoundCount: number
-  initialMapPool: MapPool
-  initialTeams: string[]
+  initialSetupData: TournamentSetupData
 }>()
 
 const emit = defineEmits<{
-  (
-    e: 'finish',
-    format: TournamentFormat,
-    counterpickRoundCount: number,
-    mapPool: MapPool,
-    teams: string[],
-  ): void
+  (e: 'finish', setupData: TournamentSetupData): void
 }>()
 
 function pluralFormat(n: number, what: string) {
@@ -37,18 +29,25 @@ function pluralFormat(n: number, what: string) {
 const swissSettings = ref(DEFAULT_SWISS_SETTINGS)
 const singleEliminationSettings = ref(DEFAULT_SINGLE_ELIMINATION_SETTINGS)
 const doubleEliminationSettings = ref(DEFAULT_DOUBLE_ELIMINATION_SETTINGS)
-const tournamentFormatType = ref(props.initialFormat.type)
-switch (props.initialFormat.type) {
-  case 'swiss':
-    swissSettings.value = props.initialFormat
-    break
-  case 'single_elimination':
-    singleEliminationSettings.value = props.initialFormat
-    break
-  case 'double_elimination':
-    doubleEliminationSettings.value = props.initialFormat
-    break
-}
+const tournamentFormatType = ref(props.initialSetupData.format.type)
+watch(
+  () => props.initialSetupData.format,
+  (format) => {
+    tournamentFormatType.value = format.type
+    switch (format.type) {
+      case 'swiss':
+        swissSettings.value = format
+        break
+      case 'single_elimination':
+        singleEliminationSettings.value = format
+        break
+      case 'double_elimination':
+        doubleEliminationSettings.value = format
+        break
+    }
+  },
+  { immediate: true },
+)
 
 const tournamentFormat = computed<TournamentFormat>(() => {
   switch (tournamentFormatType.value) {
@@ -82,8 +81,8 @@ const minimumTeams = computed(() => {
   }
 })
 
-const counterpickRoundCount = ref<number>(props.initialCounterpickRoundCount)
-const mapPool = ref<MapPool>(props.initialMapPool)
+const counterpickRoundCount = ref<number>(props.initialSetupData.counterpickRoundCount)
+const mapPool = ref<MapPool>(props.initialSetupData.mapPool)
 const totalMapModes = computed(() => Object.values(mapPool.value).flatMap((x) => x).length)
 const currentMapSelector = ref<string | null>(null)
 function importMapPoolFromUrl() {
@@ -129,7 +128,7 @@ function importMapPoolFromJson() {
   input.click()
 }
 
-const teams = ref<string[]>(props.initialTeams)
+const teams = ref<string[]>(props.initialSetupData.teams)
 const teamNameInput = useTemplateRef('teamNameInput')
 const newTeamName = ref('')
 function addNewTeam() {
@@ -313,7 +312,9 @@ function deleteTeam(index: number) {
       <button
         class="wa-success"
         :disabled="teams.length < minimumTeams || !totalMapModes"
-        @click="() => emit('finish', tournamentFormat, counterpickRoundCount, mapPool, teams)"
+        @click="
+          () => emit('finish', { format: tournamentFormat, counterpickRoundCount, mapPool, teams })
+        "
       >
         Let's go!
       </button>
