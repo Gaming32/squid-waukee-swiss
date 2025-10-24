@@ -3,7 +3,7 @@ import type { ElementOf } from '@vueuse/core'
 export function filledArray(length: number, value?: undefined): undefined[]
 export function filledArray<T>(length: number, value: T): T[]
 export function filledArray<T>(length: number, value: T): T[] {
-  return new Array(length).fill(value)
+  return Array(length).fill(value)
 }
 
 export function appendOrAdd<D, K extends keyof D, V extends ElementOf<D[K]>>(
@@ -16,4 +16,8 @@ export function appendOrAdd<D, K extends keyof D, V extends ElementOf<D[K]>>(
   } else {
     ;(dict[key] as V[]).push(value)
   }
+}
+
+export function rangeArray(start: number, end: number) {
+  return [...Array(end - start).keys()].map((x) => x + start)
 }

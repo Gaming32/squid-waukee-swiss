@@ -15,12 +15,19 @@ import {
 
 const props = defineProps<{
   initialFormat: TournamentFormat
+  initialCounterpickRoundCount: number
   initialMapPool: MapPool
   initialTeams: string[]
 }>()
 
 const emit = defineEmits<{
-  (e: 'finish', format: TournamentFormat, mapPool: MapPool, teams: string[]): void
+  (
+    e: 'finish',
+    format: TournamentFormat,
+    counterpickRoundCount: number,
+    mapPool: MapPool,
+    teams: string[],
+  ): void
 }>()
 
 function pluralFormat(n: number, what: string) {
@@ -75,6 +82,7 @@ const minimumTeams = computed(() => {
   }
 })
 
+const counterpickRoundCount = ref<number>(props.initialCounterpickRoundCount)
 const mapPool = ref<MapPool>(props.initialMapPool)
 const totalMapModes = computed(() => Object.values(mapPool.value).flatMap((x) => x).length)
 const currentMapSelector = ref<string | null>(null)
@@ -154,39 +162,39 @@ function deleteTeam(index: number) {
       </div>
       <template v-if="tournamentFormatType === 'swiss'">
         <div class="margin-element">
-          Swiss Best Of:
+          Swiss best of:
           <input type="number" v-model="swissSettings.swissBestOf" min="1" step="2" />
         </div>
         <div class="margin-element">
-          Advancement Cutoff:
+          Advancement cutoff:
           <input type="number" v-model="swissSettings.advancementCutoff" min="2" />
         </div>
         <div class="margin-element">
-          Playoffs Best Of:
+          Playoffs best of:
           <input type="number" v-model="swissSettings.playoffsBestOf" min="1" step="2" />
         </div>
       </template>
       <template v-else-if="tournamentFormatType === 'single_elimination'">
         <div class="margin-element">
-          Best Of:
+          Best of:
           <input type="number" v-model="singleEliminationSettings.bestOf" min="1" step="2" />
         </div>
         <div class="margin-element">
-          Semis/Finals Best Of:
+          Semis/finals best of:
           <input type="number" v-model="singleEliminationSettings.finalsBestOf" min="1" step="2" />
         </div>
       </template>
       <template v-else-if="tournamentFormatType === 'double_elimination'">
         <div class="margin-element">
-          Best Of:
+          Best of:
           <input type="number" v-model="doubleEliminationSettings.bestOf" min="1" step="2" />
         </div>
         <div class="margin-element">
-          Finals Best Of:
+          Finals best Of:
           <input type="number" v-model="doubleEliminationSettings.finalsBestOf" min="1" step="2" />
         </div>
         <div class="margin-element">
-          Grand Final Best Of:
+          Grand final best of:
           <input
             type="number"
             v-model="doubleEliminationSettings.grandFinalBestOf"
@@ -199,7 +207,10 @@ function deleteTeam(index: number) {
 
     <details class="narrow-element" open>
       <summary>
-        <h3>Map pool ({{ pluralFormat(totalMapModes, 'map/mode') }})</h3>
+        <h3>
+          Map pool ({{ pluralFormat(totalMapModes, 'map/mode') }},
+          {{ pluralFormat(counterpickRoundCount, 'counterpick') }})
+        </h3>
       </summary>
       <div>
         <div v-for="(maps, mode) in mapPool" :key="mode">
@@ -254,6 +265,10 @@ function deleteTeam(index: number) {
       <button class="wa-brand block-button" @click="importMapPoolFromJson">
         Import from maps.iplabs.com JSON
       </button>
+      <div class="margin-element">
+        Counterpick rounds:
+        <input type="number" v-model="counterpickRoundCount" min="0" />
+      </div>
     </details>
 
     <details class="narrow-element" open>
@@ -298,7 +313,7 @@ function deleteTeam(index: number) {
       <button
         class="wa-success"
         :disabled="teams.length < minimumTeams || !totalMapModes"
-        @click="() => emit('finish', tournamentFormat, mapPool, teams)"
+        @click="() => emit('finish', tournamentFormat, counterpickRoundCount, mapPool, teams)"
       >
         Let's go!
       </button>

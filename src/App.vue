@@ -2,10 +2,7 @@
 import { useDark } from '@vueuse/core'
 import { generateRounds } from 'maps.iplabs.ink/src/helpers/MapGeneration'
 import { maps as allMaps } from 'maps.iplabs.ink/src/helpers/MapMode'
-import type {
-  AppContext as MapData,
-  MapPool,
-} from 'maps.iplabs.ink/src/types-interfaces/Interfaces'
+import type { MapPool } from 'maps.iplabs.ink/src/types-interfaces/Interfaces'
 import type { Mode } from 'maps.iplabs.ink/src/types-interfaces/Types'
 import storageAvailable from 'storage-available'
 import { Manager, Match } from 'tournament-organizer/components'
@@ -17,6 +14,7 @@ import { appendOrAdd } from './utils'
 import { last } from 'lodash'
 import FinalStandings from './components/FinalStandings.vue'
 import {
+  computeCounterpickRoundIndices,
   computeFinalStandings,
   computeLosersRoundCount,
   computeSimpleRoundCount,
@@ -26,6 +24,7 @@ import {
   type TournamentFormat,
 } from './format'
 import type { Tournament } from 'tournament-organizer/components'
+import type { MapData } from './maps'
 
 useDark({
   valueDark: 'wa-dark',
@@ -56,6 +55,7 @@ const mapData = ref<MapData>({
     cb: [...allMaps],
   },
   rounds: [],
+  counterpickRoundCount: 0,
 })
 const currentRoundNumbers = computed(() => {
   const tourney = tournament.value
@@ -155,6 +155,7 @@ if (storageAvailable('localStorage')) {
         tournament.value!.getPlayers().length,
         tournamentFormat.value,
         mapData.value.mapPool,
+        0,
       )
     }
   }
@@ -181,18 +182,28 @@ if (storageAvailable('localStorage')) {
   watchAndStore(MAP_DATA_KEY, mapData)
 }
 
-function generateRoundsWithFormat(players: number, format: TournamentFormat, mapPool: MapPool) {
+function generateRoundsWithFormat(
+  players: number,
+  format: TournamentFormat,
+  mapPool: MapPool,
+  counterpickRounds: number,
+) {
   return generateRounds(
     createRounds(players, format),
     mapPool,
     'Replace All',
     Object.keys(mapPool).filter((m) => mapPool[m as keyof MapPool].length) as Mode[],
     [],
-    [],
+    computeCounterpickRoundIndices(counterpickRounds, players, format),
   )
 }
 
-function createTournament(format: TournamentFormat, mapPool: MapPool, teams: string[]) {
+function createTournament(
+  format: TournamentFormat,
+  counterpickRoundCount: number,
+  mapPool: MapPool,
+  teams: string[],
+) {
   const newTournament = tournamentManager.createTournament('Squid-Waukee', {
     sorting: 'none',
     ...createInitialTournamentOrganizerFormatSettings(format),
@@ -233,7 +244,8 @@ function createTournament(format: TournamentFormat, mapPool: MapPool, teams: str
   tournamentFormat.value = format
   mapData.value = {
     mapPool,
-    rounds: generateRoundsWithFormat(teams.length, format, mapPool),
+    rounds: generateRoundsWithFormat(teams.length, format, mapPool, counterpickRoundCount),
+    counterpickRoundCount: counterpickRoundCount,
   }
 }
 
@@ -344,6 +356,7 @@ function nextRound() {
     <SetupTourney
       v-if="tournament === null"
       :initial-format="tournamentFormat"
+      :initial-counterpick-round-count="mapData.counterpickRoundCount"
       :initial-map-pool="mapData.mapPool"
       :initial-teams="initialTeams"
       @finish="createTournament"

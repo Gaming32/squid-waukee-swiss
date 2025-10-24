@@ -1,5 +1,5 @@
 import type { Round } from 'maps.iplabs.ink/src/types-interfaces/Interfaces'
-import { appendOrAdd, filledArray } from './utils'
+import { appendOrAdd, filledArray, rangeArray } from './utils'
 import type { SettableTournamentValues, StandingsValues } from 'tournament-organizer/interfaces'
 import type { Player, Tournament } from 'tournament-organizer/components'
 import { findLast, last } from 'lodash'
@@ -103,7 +103,7 @@ export function createRounds(players: number, format: TournamentFormat) {
         (r) => `Swiss R${r}`,
       )
       const playoffRounds = createElimRounds(
-        computeSimpleRoundCount(format.advancementCutoff),
+        computeSimpleRoundCount(Math.min(format.advancementCutoff, players)),
         format.playoffsBestOf,
         format.playoffsBestOf,
         format.playoffsBestOf,
@@ -112,7 +112,12 @@ export function createRounds(players: number, format: TournamentFormat) {
       return swissRounds.concat(playoffRounds)
     }
     case 'single_elimination':
-      return createElimRounds(players, format.bestOf, format.finalsBestOf, format.finalsBestOf)
+      return createElimRounds(
+        computeSimpleRoundCount(players),
+        format.bestOf,
+        format.finalsBestOf,
+        format.finalsBestOf,
+      )
     case 'double_elimination': {
       const winnersRounds = createElimRounds(
         computeSimpleRoundCount(players),
@@ -135,6 +140,46 @@ export function createRounds(players: number, format: TournamentFormat) {
       return winnersRounds
         .concat([createRound('Grand Final', format.grandFinalBestOf)])
         .concat(losersRounds)
+    }
+  }
+}
+
+export function computeCounterpickRoundIndices(
+  counterpickRounds: number,
+  players: number,
+  format: TournamentFormat,
+) {
+  if (counterpickRounds === 0) {
+    return []
+  }
+  switch (format.type) {
+    case 'swiss': {
+      const swissRounds = computeSimpleRoundCount(players)
+      const playoffRounds = computeSimpleRoundCount(Math.min(format.advancementCutoff, players))
+      const totalRounds = swissRounds + playoffRounds
+      return rangeArray(Math.max(totalRounds - counterpickRounds, swissRounds), totalRounds)
+    }
+    case 'single_elimination': {
+      const roundCount = computeSimpleRoundCount(players)
+      return rangeArray(Math.max(roundCount - counterpickRounds, 0), roundCount)
+    }
+    case 'double_elimination': {
+      const winnersRounds = computeSimpleRoundCount(players)
+      const losersRounds = computeLosersRoundCount(players)
+      const totalRounds = winnersRounds + 1 + losersRounds
+      const result = [winnersRounds]
+      if (counterpickRounds > 1) {
+        result.push(
+          ...rangeArray(Math.max(winnersRounds - counterpickRounds + 1, 0), winnersRounds),
+        )
+        result.push(
+          ...rangeArray(
+            Math.max(totalRounds - counterpickRounds + 1, winnersRounds + 1),
+            totalRounds,
+          ),
+        )
+      }
+      return result.sort()
     }
   }
 }
