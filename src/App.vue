@@ -396,7 +396,7 @@ function nextRound() {
         <div v-if="currentRoundsMapData.length" class="print-hide">
           <template v-for="data in currentRoundsMapData" :key="data.name">
             <h3>{{ data.name }} Map List</h3>
-            <ul>
+            <ol>
               <li v-for="mapMode in data.games" :key="Object.values(mapMode).toString()">
                 {{
                   mapMode === 'counterpick'
@@ -404,7 +404,7 @@ function nextRound() {
                     : `${mapMode.mode.toUpperCase()} ${mapMode.map}`
                 }}
               </li>
-            </ul>
+            </ol>
           </template>
         </div>
         <FinalStandings
