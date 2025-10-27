@@ -35,6 +35,7 @@
     "brackets-model": "^1.5.0",
     "eslint": "^9.33.0",
     "eslint-plugin-vue": "~10.5.1",
+    "git-describe": "^4.1.1",
     "jiti": "^2.5.1",
     "npm-run-all2": "^8.0.4",
     "prettier": "3.6.2",
