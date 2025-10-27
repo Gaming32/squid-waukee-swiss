@@ -7,13 +7,13 @@ import { qrcode } from 'vite-plugin-qrcode'
 import describe from 'git-describe'
 import { spawnSync } from 'node:child_process'
 
-const extraDefine: { [key: string]: string } = {}
+const extraEnv: { [key: string]: string } = {}
 
 if (process.env.VERCEL_GIT_PROVIDER === 'github') {
-  extraDefine.GIT_REMOTE = `https://github.com/${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`
+  extraEnv.GIT_REMOTE = `https://github.com/${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`
 } else {
   try {
-    extraDefine.GIT_REMOTE = spawnSync('git', ['remote', 'get-url', 'origin'])
+    extraEnv.GIT_REMOTE = spawnSync('git', ['remote', 'get-url', 'origin'])
       .stdout.toString()
       .trim()
       .replace(/\.git$/, '')
@@ -21,18 +21,16 @@ if (process.env.VERCEL_GIT_PROVIDER === 'github') {
 }
 
 if ('VERCEL_GIT_PULL_REQUEST_ID' in process.env) {
-  extraDefine.GIT_PR = process.env.VERCEL_GIT_PULL_REQUEST_ID!
+  extraEnv.GIT_PR = process.env.VERCEL_GIT_PULL_REQUEST_ID!
 }
 
 try {
   const gitInfo = describe.gitDescribeSync()
   if (gitInfo.dirty) {
-    extraDefine.GIT_DIRTY = '1'
+    extraEnv.GIT_DIRTY = '1'
   }
-  extraDefine.GIT_COMMIT = gitInfo.hash
+  extraEnv.GIT_COMMIT = gitInfo.hash
 } catch {}
-
-console.log(extraDefine)
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -44,7 +42,7 @@ export default defineConfig({
     },
   },
   define: Object.fromEntries(
-    Object.entries(extraDefine).map(([key, value]) => [
+    Object.entries(extraEnv).map(([key, value]) => [
       `import.meta.env.${key}`,
       JSON.stringify(value),
     ]),
