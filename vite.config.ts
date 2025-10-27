@@ -9,12 +9,16 @@ import { spawnSync } from 'node:child_process'
 
 const extraDefine: { [key: string]: string } = {}
 
-try {
-  extraDefine.GIT_REMOTE = spawnSync('git', ['remote', 'get-url', 'origin'])
-    .stdout.toString()
-    .trim()
-    .replace(/\.git$/, '')
-} catch {}
+if (process.env.VERCEL_GIT_PROVIDER === 'github') {
+  extraDefine.GIT_REMOTE = `https://github.com/${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`
+} else {
+  try {
+    extraDefine.GIT_REMOTE = spawnSync('git', ['remote', 'get-url', 'origin'])
+      .stdout.toString()
+      .trim()
+      .replace(/\.git$/, '')
+  } catch {}
+}
 
 if ('VERCEL_GIT_PULL_REQUEST_ID' in process.env) {
   extraDefine.GIT_PR = process.env.VERCEL_GIT_PULL_REQUEST_ID!

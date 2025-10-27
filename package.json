@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "git remote -v && run-p type-check \"build-only {@}\" --",
+    "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
