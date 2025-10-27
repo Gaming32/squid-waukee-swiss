@@ -9,8 +9,6 @@ import { spawnSync } from 'node:child_process'
 
 const extraDefine: { [key: string]: string } = {}
 
-console.log(process.env)
-
 try {
   extraDefine.GIT_REMOTE = spawnSync('git', ['remote', 'get-url', 'origin'])
     .stdout.toString()
@@ -18,8 +16,8 @@ try {
     .replace(/\.git$/, '')
 } catch {}
 
-if (process.env.VERCEL_GIT_PULL_REQUEST_ID) {
-  extraDefine.GIT_PR = process.env.VERCEL_GIT_PULL_REQUEST_ID
+if ('VERCEL_GIT_PULL_REQUEST_ID' in process.env) {
+  extraDefine.GIT_PR = process.env.VERCEL_GIT_PULL_REQUEST_ID!
 }
 
 try {
@@ -29,6 +27,8 @@ try {
   }
   extraDefine.GIT_COMMIT = gitInfo.hash
 } catch {}
+
+console.log(extraDefine)
 
 // https://vite.dev/config/
 export default defineConfig({
