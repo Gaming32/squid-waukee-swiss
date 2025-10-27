@@ -32,6 +32,13 @@ try {
   extraEnv.GIT_COMMIT = gitInfo.hash
 } catch {}
 
+extraEnv.APP_URL =
+  process.env.VERCEL_ENV === 'production'
+    ? process.env.VERCEL_PROJECT_PRODUCTION_URL!
+    : 'VERCEL_URL' in process.env
+      ? process.env.VERCEL_URL!
+      : 'squid-waukee-tourney.jemnetworks.com'
+
 // https://vite.dev/config/
 export default defineConfig({
   base: '',
