@@ -352,7 +352,7 @@ function nextRound() {
   <div class="app-root">
     <ReportScoreModal ref="reportScoreModal" />
 
-    <div class="main-body">
+    <div>
       <h1 :class="{ 'low-margin-title': tournament !== null }">Squid-Waukee</h1>
 
       <SetupTourney
