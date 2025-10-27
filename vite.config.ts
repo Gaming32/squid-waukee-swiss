@@ -9,6 +9,8 @@ import { spawnSync } from 'node:child_process'
 
 const extraDefine: { [key: string]: string } = {}
 
+console.log(process.env)
+
 try {
   extraDefine.GIT_REMOTE = spawnSync('git', ['remote', 'get-url', 'origin'])
     .stdout.toString()
