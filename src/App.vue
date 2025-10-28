@@ -333,9 +333,9 @@ function nextRound() {
 <template>
   <ReportScoreModal ref="reportScoreModal" />
 
-  <div class="app-body">
-    <h1 :class="{ 'low-margin-title': tournament !== null }">Squid-Waukee</h1>
+  <h1 :class="{ 'low-margin-title': tournament !== null }">Squid-Waukee</h1>
 
+  <div class="app-body">
     <SetupTourney
       v-if="tournament === null"
       :initial-setup-data="{
