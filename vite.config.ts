@@ -20,12 +20,16 @@ if (process.env.VERCEL_GIT_PROVIDER === 'github') {
   } catch {}
 }
 
-try {
-  extraEnv.GIT_REV = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'])
-    .stdout.toString()
-    .trim()
-    .replace(/\.git$/, '')
-} catch {}
+if ('VERCEL_GIT_COMMIT_REF' in process.env) {
+  extraEnv.GIT_REV = process.env.VERCEL_GIT_COMMIT_REF!
+} else {
+  try {
+    extraEnv.GIT_REV = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'])
+      .stdout.toString()
+      .trim()
+      .replace(/\.git$/, '')
+  } catch {}
+}
 
 if ('VERCEL_GIT_PULL_REQUEST_ID' in process.env) {
   extraEnv.GIT_PR = process.env.VERCEL_GIT_PULL_REQUEST_ID!
