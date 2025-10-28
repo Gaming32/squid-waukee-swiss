@@ -413,6 +413,7 @@ function nextRound() {
       </div>
     </template>
   </div>
+
   <RepoFooter />
 </template>
 
