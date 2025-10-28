@@ -331,101 +331,92 @@ function nextRound() {
 </script>
 
 <template>
-  <div class="app-root">
-    <ReportScoreModal ref="reportScoreModal" />
+  <ReportScoreModal ref="reportScoreModal" />
 
-    <div>
-      <h1 :class="{ 'low-margin-title': tournament !== null }">Squid-Waukee</h1>
+  <div class="app-body">
+    <h1 :class="{ 'low-margin-title': tournament !== null }">Squid-Waukee</h1>
 
-      <SetupTourney
-        v-if="tournament === null"
-        :initial-setup-data="{
-          format: tournamentFormat,
-          counterpickRoundCount: mapData.counterpickRoundCount,
-          mapPool: mapData.mapPool,
-          teams: initialTeams,
-        }"
-        @finish="createTournament"
-      />
-      <template v-else>
-        <button class="wa-size-s wa-danger padded-button" @click="resetAndEdit">
-          Clear all and edit tournament
-        </button>
+    <SetupTourney
+      v-if="tournament === null"
+      :initial-setup-data="{
+        format: tournamentFormat,
+        counterpickRoundCount: mapData.counterpickRoundCount,
+        mapPool: mapData.mapPool,
+        teams: initialTeams,
+      }"
+      @finish="createTournament"
+    />
+    <template v-else>
+      <button class="wa-size-s wa-danger padded-button" @click="resetAndEdit">
+        Clear all and edit tournament
+      </button>
 
-        <div class="stages-align">
-          <template v-if="tournamentFormat.type === 'swiss'">
-            <TournamentStage
-              title="Swiss"
-              :stage-active="tournament.getStatus() === 'stage-one'"
-              :stage-info="{
-                type: 'swiss',
-                roundCount: swissRoundCount,
-                standings: swissStandings,
-              }"
-              :ordered-teams="[]"
-              :team-names="teamNames"
-              :matches="tournamentMatches.filter((m) => m.getRoundNumber() <= swissRoundCount)"
-              @match-clicked="reportScore"
-              @drop-team="dropTeam"
-              @next-round="nextRound"
-            />
-
-            <TournamentStage
-              v-if="tournament.getStatus() === 'stage-two' || tournament.getStatus() == 'complete'"
-              title="Playoffs"
-              :stage-info="{ type: 'single_elimination' }"
-              :ordered-teams="swissStandings.map((s) => s.player.getId())"
-              :team-names="teamNames"
-              :matches="tournamentMatches.filter((m) => m.getRoundNumber() > swissRoundCount)"
-              @match-clicked="reportScore"
-            />
-          </template>
+      <div class="stages-align">
+        <template v-if="tournamentFormat.type === 'swiss'">
           <TournamentStage
-            v-else-if="
-              tournamentFormat.type === 'single_elimination' ||
-              tournamentFormat.type === 'double_elimination'
-            "
-            :stage-info="{ type: tournamentFormat.type }"
+            title="Swiss"
+            :stage-active="tournament.getStatus() === 'stage-one'"
+            :stage-info="{
+              type: 'swiss',
+              roundCount: swissRoundCount,
+              standings: swissStandings,
+            }"
             :ordered-teams="[]"
             :team-names="teamNames"
-            :matches="tournamentMatches"
+            :matches="tournamentMatches.filter((m) => m.getRoundNumber() <= swissRoundCount)"
             @match-clicked="reportScore"
+            @drop-team="dropTeam"
+            @next-round="nextRound"
           />
 
-          <div v-if="currentRoundsMapData.length" class="print-hide">
-            <template v-for="data in currentRoundsMapData" :key="data.name">
-              <h3>{{ data.name }} Map List</h3>
-              <ol>
-                <li v-for="mapMode in data.games" :key="Object.values(mapMode).toString()">
-                  {{
-                    mapMode === 'counterpick'
-                      ? 'Counterpick'
-                      : `${mapMode.mode.toUpperCase()} ${mapMode.map}`
-                  }}
-                </li>
-              </ol>
-            </template>
-          </div>
-          <FinalStandings
-            :final-standings="finalStandings"
-            :completed-matches-per-team="completedMatchesPerTeam"
-            :stage-round-cutoffs="stageRoundCutoffs"
+          <TournamentStage
+            v-if="tournament.getStatus() === 'stage-two' || tournament.getStatus() == 'complete'"
+            title="Playoffs"
+            :stage-info="{ type: 'single_elimination' }"
+            :ordered-teams="swissStandings.map((s) => s.player.getId())"
+            :team-names="teamNames"
+            :matches="tournamentMatches.filter((m) => m.getRoundNumber() > swissRoundCount)"
+            @match-clicked="reportScore"
           />
+        </template>
+        <TournamentStage
+          v-else-if="
+            tournamentFormat.type === 'single_elimination' ||
+            tournamentFormat.type === 'double_elimination'
+          "
+          :stage-info="{ type: tournamentFormat.type }"
+          :ordered-teams="[]"
+          :team-names="teamNames"
+          :matches="tournamentMatches"
+          @match-clicked="reportScore"
+        />
+
+        <div v-if="currentRoundsMapData.length" class="print-hide">
+          <template v-for="data in currentRoundsMapData" :key="data.name">
+            <h3>{{ data.name }} Map List</h3>
+            <ol>
+              <li v-for="mapMode in data.games" :key="Object.values(mapMode).toString()">
+                {{
+                  mapMode === 'counterpick'
+                    ? 'Counterpick'
+                    : `${mapMode.mode.toUpperCase()} ${mapMode.map}`
+                }}
+              </li>
+            </ol>
+          </template>
         </div>
-      </template>
-    </div>
-    <RepoFooter />
+        <FinalStandings
+          :final-standings="finalStandings"
+          :completed-matches-per-team="completedMatchesPerTeam"
+          :stage-round-cutoffs="stageRoundCutoffs"
+        />
+      </div>
+    </template>
   </div>
+  <RepoFooter />
 </template>
 
 <style scoped>
-.app-root {
-  min-width: 100%;
-  min-height: 100%;
-  display: grid;
-  grid-template-rows: 1fr auto;
-}
-
 .low-margin-title {
   margin-bottom: 0.17em;
 }
