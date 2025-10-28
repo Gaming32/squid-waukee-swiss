@@ -35,13 +35,17 @@ if ('VERCEL_GIT_PULL_REQUEST_ID' in process.env) {
   extraEnv.GIT_PR = process.env.VERCEL_GIT_PULL_REQUEST_ID!
 }
 
-try {
-  const gitInfo = describe.gitDescribeSync()
-  if (gitInfo.dirty) {
-    extraEnv.GIT_DIRTY = '1'
-  }
-  extraEnv.GIT_COMMIT = gitInfo.hash
-} catch {}
+if ('VERCEL_GIT_COMMIT_SHA' in process.env) {
+  extraEnv.GIT_COMMIT = process.env.VERCEL_GIT_COMMIT_SHA!.substring(0, 7)
+} else {
+  try {
+    const gitInfo = describe.gitDescribeSync()
+    if (gitInfo.dirty) {
+      extraEnv.GIT_DIRTY = '1'
+    }
+    extraEnv.GIT_COMMIT = gitInfo.hash
+  } catch {}
+}
 
 extraEnv.APP_URL =
   process.env.VERCEL_ENV === 'production'
