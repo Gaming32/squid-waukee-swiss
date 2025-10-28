@@ -289,24 +289,6 @@ function reportScore(matchId: string) {
       tourney.enterResult(matchId, scores.score1, scores.score2)
       tourney.getScoring().bestOf = oldBestOf
 
-      // TODO: Maybe remove this if tournament-organizer gets this feature
-      function adaptSeating(destination: string | null) {
-        if (!destination) return
-        const destinationMatch = tourney.getMatch(destination)
-        if (destinationMatch.isPaired()) return
-        if (
-          tourney
-            .getMatches()
-            .find((m) => m.getPath().win === destination || m.getPath().loss === destination) !==
-          match
-        ) {
-          destinationMatch!.getPlayer2().id = destinationMatch!.getPlayer1().id
-          destinationMatch!.getPlayer1().id = null
-        }
-      }
-      adaptSeating(match.getPath().win)
-      adaptSeating(match.getPath().loss)
-
       if (tourney.getCurrentFormat() !== 'swiss') {
         nextRound()
       }

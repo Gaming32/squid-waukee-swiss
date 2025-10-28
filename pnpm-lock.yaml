@@ -26,8 +26,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       tournament-organizer:
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^4.1.0
+        version: 4.1.0
       vue:
         specifier: ^3.5.22
         version: 3.5.22(typescript@5.9.3)
@@ -1950,8 +1950,8 @@ packages:
     resolution: {integrity: sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==}
     engines: {node: '>=6'}
 
-  tournament-organizer@4.0.0:
-    resolution: {integrity: sha512-IvJZtcEpJ9hvyYZtwS9DJuAV/SBI0W6Xi1/kGPLeX1T/MhncgpWFKguehm6/gmvshQfJpEPY5DvvGeaEBNpamA==}
+  tournament-organizer@4.1.0:
+    resolution: {integrity: sha512-hTCOxreIViTVH7RtuzmOrf85p7bMJ6RMKpkmKmLhwodo1NDEzAhsC0blheoCWHd03x6hgoqvtvujGhviCTp8DQ==}
     engines: {node: '>=16.7'}
 
   tournament-pairings@2.0.1:
@@ -3922,7 +3922,7 @@ snapshots:
 
   totalist@3.0.1: {}
 
-  tournament-organizer@4.0.0:
+  tournament-organizer@4.1.0:
     dependencies:
       tournament-pairings: 2.0.1
 
