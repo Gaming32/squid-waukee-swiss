@@ -3,7 +3,7 @@ import { h, type FunctionalComponent } from 'vue'
 
 const gitRemote: string = import.meta.env.GIT_REMOTE
 const gitRev: string = import.meta.env.GIT_REV
-const gitDirty = Boolean(import.meta.env.GIT_DIRTY)
+const gitDirty = !!import.meta.env.GIT_DIRTY
 const gitCommit: string = import.meta.env.GIT_COMMIT
 const gitPr: string = import.meta.env.GIT_PR
 
