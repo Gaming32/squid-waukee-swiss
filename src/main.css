@@ -27,6 +27,7 @@ div#app {
   min-height: 100%;
   display: grid;
   grid-template-rows: auto 1fr auto;
+  grid-template-columns: 100%;
 }
 
 th[title] {
