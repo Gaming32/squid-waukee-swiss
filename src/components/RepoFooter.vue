@@ -46,4 +46,10 @@ MaybeLink.props = {
 .footer {
   text-align: center;
 }
+
+@media print {
+  .footer {
+    display: none;
+  }
+}
 </style>
