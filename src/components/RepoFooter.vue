@@ -10,7 +10,9 @@ const gitPr: string = import.meta.env.GIT_PR
 const MaybeLink: FunctionalComponent<{ urlPart: string; urlLink: string }> = (props, { slots }) => {
   const innerBody = slots.default?.() ?? props.urlLink
   return gitRemote
-    ? h('a', { href: `${gitRemote}/${props.urlPart}/${props.urlLink}` }, [innerBody])
+    ? h('a', { href: `${gitRemote}/${props.urlPart}/${props.urlLink}`, target: '_blank' }, [
+        innerBody,
+      ])
     : innerBody
 }
 MaybeLink.props = {
